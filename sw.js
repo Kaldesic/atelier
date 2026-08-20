@@ -1,4 +1,4 @@
-const CACHE_NAME = 'atelier-v8';
+const CACHE_NAME = 'atelier-v9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -20,7 +20,8 @@ const ASSETS_TO_CACHE = [
   './js/tools/svg-cleaner.js',
   './js/tools/svg-converter.js',
   './js/tools/unit-converter.js',
-  './js/tools/webp-converter.js'
+  './js/tools/webp-converter.js',
+  './js/tools/json-formatter.js'
 ];
 
 // 1. Instalacija - keširanje osnovnih resursa i skripti
