@@ -77,4 +77,12 @@ export const TOOLS_REGISTRY = [
     path: 'unit-converter',
     category: 'Typography & Layout'
   }
+,
+  {
+    id: 'json-formatter',
+    title: 'JSON Formatter',
+    description: 'Format, validate and syntax-highlight JSON data.',
+    path: 'json-formatter',
+    category: 'Developer Utilities'
+  }
 ];
