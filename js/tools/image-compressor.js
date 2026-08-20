@@ -2,8 +2,8 @@ export const html = `<h1>Image Compressor</h1>
         <p class="subtitle">Reduce JPEG and PNG file sizes with custom quality options directly in your browser.</p>
 
         <div class="tool-section" style="display:flex; justify-content:space-between; align-items:center;">
-            <label>
-                <span class="input-label" style="margin:0;">Compression Quality</span>
+            <label style="display:flex; align-items:center; gap:0.5rem;">
+                <span style="font-weight:500; font-size:0.9rem;">Compression Quality</span>
                 <span id="qualityVal">75%</span>
             </label>
             <input type="range" id="qualityRange" min="10" max="100" value="75">
