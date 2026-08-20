@@ -31,7 +31,7 @@ body {
 }
 
 .container {
-  max-width: 650px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
 }
@@ -645,4 +645,22 @@ footer a:hover {
 .btn[disabled], .preset-btn[disabled] {
   opacity: 0.5;
   pointer-events: none;
+}
+
+/* Mobilni prikaži (po defaultu): 1 kolona */
+#app-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Desktop prikaz (ekrani širi od 768px): Kolone jedna pored druge */
+@media (min-width: 768px) {
+  #app-root {
+    display: grid;
+    /* Automatski kreira kolone širine min 320px */
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+    align-items: start;
+    gap: 2rem;
+  }
 }
