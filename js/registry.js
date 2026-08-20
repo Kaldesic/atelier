@@ -1,0 +1,80 @@
+/* js/registry.js */
+export const TOOLS_REGISTRY = [
+  {
+    id: 'webp-converter',
+    title: 'WebP Converter',
+    description: 'Convert JPG, PNG, and GIF images to WebP format instantly.',
+    path: 'webp-converter',
+    category: 'Media & Images'
+  },
+  {
+    id: 'svg-cleaner',
+    title: 'SVG Cleaner',
+    description: 'Optimize SVGs by removing metadata, comments, and inline clutter.',
+    path: 'svg-cleaner',
+    category: 'Developer Utilities'
+  },
+  {
+    id: 'favicon-generator',
+    title: 'Favicon Generator',
+    description: 'Generate complete web & mobile app favicon packages with ZIP download.',
+    path: 'favicon-generator',
+    category: 'Developer Utilities'
+  },
+  {
+    id: 'color-extractor',
+    title: 'Color Palette Extractor',
+    description: 'Extract dominant colors and hex codes from uploaded images.',
+    path: 'color-extractor',
+    category: 'Media & Images'
+  },
+  {
+    id: 'image-resizer',
+    title: 'Image Resizer',
+    description: 'Resize images with custom dimensions and aspect ratio locking.',
+    path: 'image-resizer',
+    category: 'Media & Images'
+  },
+  {
+    id: 'exif-stripper',
+    title: 'EXIF Metadata Stripper',
+    description: 'Remove sensitive geolocation and camera data from personal photos.',
+    path: 'exif-stripper',
+    category: 'Media & Images'
+  },
+  {
+    id: 'aspect-ratio-calculator',
+    title: 'Aspect Ratio Calculator',
+    description: 'Calculate proportional dimensions for responsive layouts.',
+    path: 'aspect-ratio-calculator',
+    category: 'Typography & Layout'
+  },
+  {
+    id: 'image-compressor',
+    title: 'Image Compressor',
+    description: 'Reduce image file size with configurable quality settings.',
+    path: 'image-compressor',
+    category: 'Media & Images'
+  },
+  {
+    id: 'base64-converter',
+    title: 'Base64 Encoder / Decoder',
+    description: 'Convert files to Base64 Data URLs and decode strings back to files.',
+    path: 'base64-converter',
+    category: 'Developer Utilities'
+  },
+  {
+    id: 'svg-converter',
+    title: 'SVG Rasterizer',
+    description: 'Convert vector SVG files to high-res PNG or WebP images.',
+    path: 'svg-converter',
+    category: 'Developer Utilities'
+  },
+  {
+    id: 'unit-converter',
+    title: 'PX / REM & Fluid Type Engine',
+    description: 'Convert CSS units and generate fluid typography clamp formulas.',
+    path: 'unit-converter',
+    category: 'Typography & Layout'
+  }
+];
