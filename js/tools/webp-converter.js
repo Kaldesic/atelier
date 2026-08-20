@@ -7,7 +7,7 @@ export const html = `<h1>WebP Converter</h1>
         </div>
 
         <div class="tool-section">
-            <label for="qualitySlider" class="input-label">Output Quality</label>
+            <label for="qualitySlider" style="display:block; margin-bottom:0.5rem; font-weight:500; font-size:0.9rem;">Output Quality</label>
             <div style="display:flex; align-items:center; gap:1rem;">
                 <input type="range" id="qualitySlider" style="flex:1;" min="10" max="100" value="85">
                 <span class="quality-value" id="qualityVal">85%</span>
