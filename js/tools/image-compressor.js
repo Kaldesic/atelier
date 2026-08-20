@@ -1,9 +1,9 @@
 export const html = `<h1>Image Compressor</h1>
         <p class="subtitle">Reduce JPEG and PNG file sizes with custom quality options directly in your browser.</p>
 
-        <div class="controls">
+        <div class="tool-section" style="display:flex; justify-content:space-between; align-items:center;">
             <label>
-                <span>Compression Quality</span>
+                <span class="input-label" style="margin:0;">Compression Quality</span>
                 <span id="qualityVal">75%</span>
             </label>
             <input type="range" id="qualityRange" min="10" max="100" value="75">
@@ -142,11 +142,11 @@ window.Atelier.setPasteHandler((e) => {
                             const item = document.createElement('div');
                             item.className = 'result-item';
                             item.innerHTML = `
-                                <div class="file-info">
-                                    <div class="file-name">${file.name}</div>
-                                    <div class="file-stats">
+                                <div class="result-info">
+                                    <div class="result-name">${file.name}</div>
+                                    <div class="result-meta">
                                         ${formatBytes(file.size)} → ${formatBytes(blob.size)}
-                                        <span class="savings ${!isSaved ? 'negative' : ''}">(${savingsLabel})</span>
+                                        <span class="badge ${!isSaved ? 'negative' : ''}">(${savingsLabel})</span>
                                     </div>
                                 </div>
                                 <a href="${url}" download="compressed_${file.name.replace(/\.[^/.]+$/, "")}.jpg" class="download-btn">Download</a>
