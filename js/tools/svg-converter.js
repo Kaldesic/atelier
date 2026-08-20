@@ -6,11 +6,11 @@ export const html = `<h1>SVG Rasterizer</h1>
             <input type="file" id="fileInput" accept=".svg,image/svg+xml">
         </div>
 
-        <div class="output-section" id="outputSection" style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+        <div class="output-section tool-section" id="outputSection" >
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="font-size: 0.85rem; color: var(--text-muted);">Scale Multiplier</label>
-                    <select id="scaleSelect" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                    <label class="input-label">Scale Multiplier</label>
+                    <select id="scaleSelect" class="select-field">
                         <option value="1">1x</option>
                         <option value="2" selected>2x</option>
                         <option value="4">4x</option>
@@ -19,8 +19,8 @@ export const html = `<h1>SVG Rasterizer</h1>
                     </select>
                 </div>
                 <div>
-                    <label style="font-size: 0.85rem; color: var(--text-muted);">Format</label>
-                    <select id="formatSelect" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                    <label class="input-label">Format</label>
+                    <select id="formatSelect" class="select-field">
                         <option value="image/png">PNG</option>
                         <option value="image/webp">WebP</option>
                         <option value="image/jpeg">JPEG</option>
