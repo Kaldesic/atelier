@@ -73,16 +73,6 @@ Add your tool to the array in `/js/registry.js`. The SPA router will automatical
 **3. Update the Service Worker:**
 To ensure your new tool works offline, open `sw.js`, bump the `CACHE_NAME` version (e.g., `'atelier-v4'` to `'atelier-v5'`), and add `'./js/tools/my-new-tool.js'` to the `ASSETS_TO_CACHE` array.
 
-## 💻 Local Development
-
-To run Atelier locally, use the included Node.js minimal server:
-
-```bash
-npm install
-npm run dev
-```
-Navigate to `http://localhost:3000`.
-
 ## 🛡️ License & Privacy
 100% Client-side processing • No analytics • Zero Telemetry
 Built with precision for web developers & designers.
