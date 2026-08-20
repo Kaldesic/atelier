@@ -125,3 +125,13 @@ window.addEventListener('hashchange', route);
 // Initial render
 document.addEventListener('DOMContentLoaded', route);
 
+
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('ServiceWorker registration successful with scope: ', reg.scope))
+            .catch(err => console.error('ServiceWorker registration failed: ', err));
+    });
+}
