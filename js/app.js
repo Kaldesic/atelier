@@ -36,18 +36,9 @@ const navBack = document.getElementById('nav-back');
 async function route() {
     purgeGlobalMemory();
     
-    // Normalize path
-    let path = window.location.pathname;
-    if (path.endsWith('/') && path.length > 1) {
-        path = path.slice(0, -1);
-    }
-    
-    // GitHub Pages usually serves at /atelier
-    const pathParts = path.split('/').filter(Boolean);
-    const lastSegment = pathParts[pathParts.length - 1];
-    
-    // If we are at root or just /atelier
-    const isHome = !lastSegment || lastSegment === 'atelier';
+    // Get path from hash, default to empty (home)
+    const hash = window.location.hash.replace('#', '');
+    const isHome = !hash || hash === '/';
     
     if (isHome) {
         homeHeader.style.display = 'block';
@@ -59,14 +50,15 @@ async function route() {
         homeHeader.style.display = 'none';
         navBack.style.display = 'block';
         
-        const toolId = lastSegment;
+        // Remove leading slash if present
+        const toolId = hash.startsWith('/') ? hash.slice(1) : hash;
         const toolMeta = TOOLS_REGISTRY.find(t => t.id === toolId);
         
         if (toolMeta) {
             document.title = `${toolMeta.title} — Atelier`;
             try {
-                // Ensure import path matches github pages and local
-                const modulePath = path.includes('/atelier/') ? `/atelier/js/tools/${toolId}.js` : `/js/tools/${toolId}.js`;
+                // Dynamic import relative to app.js
+                const modulePath = `./tools/${toolId}.js`;
                 const module = await import(modulePath);
                 appRoot.innerHTML = module.html;
                 if (module.init) module.init();
@@ -82,7 +74,7 @@ async function route() {
 
 
 function renderGrid(searchQuery = '') {
-    const basePath = window.location.pathname.includes('/atelier') ? '/atelier' : '';
+    const basePath = '#/';
     
     const lowerQuery = searchQuery.toLowerCase();
     const filteredTools = TOOLS_REGISTRY.filter(t => 
@@ -108,7 +100,7 @@ function renderGrid(searchQuery = '') {
             <h2 class="category-title">${category}</h2>
             <div class="tools-grid">
                 ${tools.map(tool => `
-                    <a href="${basePath}/${tool.id}" class="tool-card" data-link>
+                    <a href="#/${tool.id}" class="tool-card" data-link>
                         <div>
                             <div class="tool-title">${tool.title}</div>
                             <div class="tool-desc">${tool.description}</div>
@@ -127,17 +119,9 @@ if (searchInput) {
     searchInput.addEventListener('input', (e) => renderGrid(e.target.value));
 }
 
-// Intercept navigation for SPA experience
-document.body.addEventListener('click', e => {
-    const a = e.target.closest('[data-link]');
-    if (a) {
-        e.preventDefault();
-        history.pushState(null, null, a.href);
-        route();
-    }
-});
 
-window.addEventListener('popstate', route);
-
+// Hash-based SPA routing
+window.addEventListener('hashchange', route);
 // Initial render
 document.addEventListener('DOMContentLoaded', route);
+
