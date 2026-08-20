@@ -1,4 +1,4 @@
-const CACHE_NAME = 'atelier-v5';
+const CACHE_NAME = 'atelier-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -7,7 +7,7 @@ const ASSETS_TO_CACHE = [
   './css/main.css',
   './js/core.js',
   './js/registry.js',
-  './js/zip.js',
+  
   './js/app.js',
   './js/workers/image-worker.js',
   './js/tools/aspect-ratio-calculator.js',
