@@ -94,23 +94,26 @@ function renderGrid(searchQuery = '') {
         return acc;
     }, {});
 
-    let html = '';
+    let html = '<div class="categories-container">';
     for (const [category, tools] of Object.entries(grouped)) {
         html += `
-            <h2 class="category-title">${category}</h2>
-            <div class="tools-grid">
-                ${tools.map(tool => `
-                    <a href="#/${tool.id}" class="tool-card" data-link>
-                        <div>
-                            <div class="tool-title">${tool.title}</div>
-                            <div class="tool-desc">${tool.description}</div>
-                        </div>
-                        <div class="arrow">→</div>
-                    </a>
-                `).join('')}
-            </div>
+            <section class="category-block">
+                <h2 class="category-title">${category}</h2>
+                <div class="tools-grid">
+                    ${tools.map(tool => `
+                        <a href="#/${tool.id}" class="tool-card" data-link>
+                            <div>
+                                <div class="tool-title">${tool.title}</div>
+                                <div class="tool-desc">${tool.description}</div>
+                            </div>
+                            <div class="arrow">→</div>
+                        </a>
+                    `).join('')}
+                </div>
+            </section>
         `;
     }
+    html += '</div>';
     appRoot.innerHTML = html;
 }
 
