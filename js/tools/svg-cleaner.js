@@ -16,8 +16,8 @@ export const html = `<h1>SVG Cleaner & Minifier</h1>
         </div>
 
         <div class="actions">
-            <button class="btn btn-outline" id="copyBtn" onclick="copySVG()" disabled>Copy Cleaned SVG</button>
-            <button class="btn" id="downloadBtn" onclick="downloadSVG()" disabled>Download SVG</button>
+            <button class="btn btn-outline" id="copyBtn"  disabled>Copy Cleaned SVG</button>
+            <button class="btn" id="downloadBtn"  disabled>Download SVG</button>
         </div>
 
         <div class="preview-box" id="previewBox">
@@ -152,6 +152,10 @@ window.Atelier.setPasteHandler((e) => {
             downloadBtn.disabled = true;
             currentCleanedSVG = '';
         }
+
+        
+        document.getElementById('copyBtn').addEventListener('click', copySVG);
+        document.getElementById('downloadBtn').addEventListener('click', downloadSVG);
 
         function copySVG() {
             if (!currentCleanedSVG) return;
