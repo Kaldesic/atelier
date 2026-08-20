@@ -109,9 +109,9 @@ window.Atelier.setPasteHandler((e) => {
                         const item = document.createElement('div');
                         item.className = 'result-item';
                         item.innerHTML = `
-                            <div class="file-info">
-                                <div class="file-name">${file.name}</div>
-                                <div class="file-status">✓ EXIF & GPS stripped</div>
+                            <div class="result-info">
+                                <div class="result-name">${file.name}</div>
+                                <div class="result-meta">✓ EXIF & GPS stripped</div>
                             </div>
                             <a href="${url}" download="${cleanFileName}" class="download-btn">Download Clean Image</a>
                         `;
