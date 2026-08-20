@@ -1,45 +1,45 @@
 export const html = `<h1>PX / REM & Fluid Type Engine</h1>
         <p class="subtitle">Convert CSS units and generate fluid typography clamp formulas.</p>
 
-        <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem;">
-            <h2 style="font-size: 1rem; margin-bottom: 1rem;">Simple Conversion</h2>
+        <div class="tool-section">
+            <h2 class="tool-section-title">Simple Conversion</h2>
             <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
                 <div style="flex: 1;">
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">Root Font Size (px)</label>
-                    <input type="number" id="rootSize" value="16" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                    <label class="input-label">Root Font Size (px)</label>
+                    <input type="number" id="rootSize" value="16" class="input-field">
                 </div>
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div>
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">Pixels (px)</label>
-                    <input type="number" id="pxInput" value="16" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                    <label class="input-label">Pixels (px)</label>
+                    <input type="number" id="pxInput" value="16" class="input-field">
                 </div>
                 <div>
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">REM</label>
-                    <input type="number" id="remInput" value="1" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                    <label class="input-label">REM</label>
+                    <input type="number" id="remInput" value="1" class="input-field">
                 </div>
             </div>
         </div>
 
         <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
-            <h2 style="font-size: 1rem; margin-bottom: 1rem;">Fluid Typography (clamp)</h2>
+            <h2 class="tool-section-title">Fluid Typography (clamp)</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">Min Viewport (px)</label>
-                    <input type="number" id="minVw" value="320" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                    <label class="input-label">Min Viewport (px)</label>
+                    <input type="number" id="minVw" value="320" class="input-field">
                 </div>
                 <div>
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">Max Viewport (px)</label>
-                    <input type="number" id="maxVw" value="1280" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                    <label class="input-label">Max Viewport (px)</label>
+                    <input type="number" id="maxVw" value="1280" class="input-field">
                 </div>
                 <div>
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">Min Font Size (rem)</label>
-                    <input type="number" id="minFs" value="1" step="0.125" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                    <label class="input-label">Min Font Size (rem)</label>
+                    <input type="number" id="minFs" value="1" step="0.125" class="input-field">
                 </div>
                 <div>
-                    <label style="font-size: 0.8rem; color: var(--text-muted);">Max Font Size (rem)</label>
-                    <input type="number" id="maxFs" value="2" step="0.125" style="width: 100%; padding: 0.5rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px;">
+                    <label class="input-label">Max Font Size (rem)</label>
+                    <input type="number" id="maxFs" value="2" step="0.125" class="input-field">
                 </div>
             </div>
             
