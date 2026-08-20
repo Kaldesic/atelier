@@ -8,7 +8,7 @@ export const html = `<h1>Base64 Encoder / Decoder</h1>
 
         <div style="margin-bottom: 1.5rem;">
             <textarea id="base64Input" placeholder="...or paste raw Base64 string here to decode" class="textarea-field" style="height: 120px;"></textarea>
-            <button id="decodeBtn" class="btn btn-primary" style="margin-top: 0.5rem;">Decode to File</button>
+            <button id="decodeBtn" class="btn btn-primary" style="margin-top: 1rem;">Decode to File</button>
         </div>
 
         <div class="output-section" id="outputSection">
