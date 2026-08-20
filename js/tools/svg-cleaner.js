@@ -7,7 +7,7 @@ export const html = `<h1>SVG Cleaner & Minifier</h1>
         </div>
 
         <div class="editor-container">
-            <textarea id="svgInput" placeholder="...or paste raw SVG code here"></textarea>
+            <textarea id="svgInput" class="textarea-field" style="height: 100px;" placeholder="...or paste raw SVG code here"></textarea>
         </div>
 
         <div class="stats-bar" id="statsBar">
@@ -17,7 +17,7 @@ export const html = `<h1>SVG Cleaner & Minifier</h1>
 
         <div class="actions">
             <button class="btn btn-outline" id="copyBtn"  disabled>Copy Cleaned SVG</button>
-            <button class="btn" id="downloadBtn"  disabled>Download SVG</button>
+            <button class="btn btn-primary" id="downloadBtn" disabled>Download SVG</button>
         </div>
 
         <div class="preview-box" id="previewBox">
