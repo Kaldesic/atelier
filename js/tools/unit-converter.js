@@ -22,7 +22,7 @@ export const html = `<h1>PX / REM & Fluid Type Engine</h1>
             </div>
         </div>
 
-        <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+        <div class="tool-section">
             <h2 class="tool-section-title">Fluid Typography (clamp)</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
