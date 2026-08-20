@@ -2,11 +2,11 @@ export const html = `<h1>Aspect Ratio Calculator</h1>
         <p class="subtitle">Calculate proportional width and height for responsive web layouts and video containers.</p>
 
         <div class="presets-bar">
-            <button class="preset-btn" onclick="setRatio(16, 9)">16:9 Widescreen</button>
-            <button class="preset-btn" onclick="setRatio(4, 3)">4:3 Standard</button>
-            <button class="preset-btn" onclick="setRatio(1, 1)">1:1 Square</button>
-            <button class="preset-btn" onclick="setRatio(21, 9)">21:9 Ultrawide</button>
-            <button class="preset-btn" onclick="setRatio(9, 16)">9:16 Vertical</button>
+            <button class="preset-btn" id="ratio-16-9">16:9 Widescreen</button>
+            <button class="preset-btn" id="ratio-4-3">4:3 Standard</button>
+            <button class="preset-btn" id="ratio-1-1">1:1 Square</button>
+            <button class="preset-btn" id="ratio-21-9">21:9 Ultrawide</button>
+            <button class="preset-btn" id="ratio-9-16">9:16 Vertical</button>
         </div>
 
         <div class="calculator-card">
@@ -32,7 +32,7 @@ export const html = `<h1>Aspect Ratio Calculator</h1>
                 </div>
             </div>
 
-            <div class="preview-box" onclick="copyDimensions()" title="Click to copy dimensions">
+            <div class="preview-box"  title="Click to copy dimensions">
                 <div class="visual-rect" id="visualRect"></div>
                 <div class="result-badge" id="resultText">1920 × 1080 px (Click to copy)</div>
             </div>
@@ -111,6 +111,14 @@ const rW = document.getElementById('rW');
         rH.addEventListener('input', () => calculate());
         tW.addEventListener('input', () => { lastModified = 'w'; calculate(); });
         tH.addEventListener('input', () => { lastModified = 'h'; calculate(); });
+
+        
+        document.getElementById('ratio-16-9').addEventListener('click', () => setRatio(16, 9));
+        document.getElementById('ratio-4-3').addEventListener('click', () => setRatio(4, 3));
+        document.getElementById('ratio-1-1').addEventListener('click', () => setRatio(1, 1));
+        document.getElementById('ratio-21-9').addEventListener('click', () => setRatio(21, 9));
+        document.getElementById('ratio-9-16').addEventListener('click', () => setRatio(9, 16));
+        document.getElementById('previewBox').addEventListener('click', copyDimensions);
 
         function setRatio(w, h) {
             rW.value = w;
