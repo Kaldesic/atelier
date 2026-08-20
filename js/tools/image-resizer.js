@@ -15,12 +15,12 @@ export const html = `<h1>Image Resizer</h1>
 
             <div class="controls-grid">
                 <div class="input-group">
-                    <label for="widthInput">Width (px)</label>
-                    <input type="number" id="widthInput" min="1" placeholder="1920">
+                    <label for="widthInput" class="input-label">Width (px)</label>
+                    <input type="number" class="input-field" id="widthInput" min="1" placeholder="1920">
                 </div>
                 <div class="input-group">
-                    <label for="heightInput">Height (px)</label>
-                    <input type="number" id="heightInput" min="1" placeholder="1080">
+                    <label for="heightInput" class="input-label">Height (px)</label>
+                    <input type="number" class="input-field" id="heightInput" min="1" placeholder="1080">
                 </div>
                 <div class="checkbox-group">
                     <input type="checkbox" id="aspectRatio" checked>
