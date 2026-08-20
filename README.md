@@ -38,41 +38,6 @@ Atelier includes an ever-expanding suite of utilities, dynamically categorized a
 - **PX / REM & Fluid Type Engine**: Convert CSS units and generate fluid typography `clamp()` formulas.
 - **Aspect Ratio Calculator**: Calculate proportional dimensions for responsive layouts.
 
-## 🛠️ Developer Guide: How to Add a New Tool
-
-Thanks to the dynamic registry architecture, expanding Atelier is completely frictionless. Adding a new tool requires exactly zero HTML files.
-
-**1. Create the Tool Module:**
-Create a new JavaScript file in `/js/tools/my-new-tool.js` exporting an `html` template string and an `init()` function:
-```javascript
-export const html = `
-    <div class="calculator-card">
-        <h2>My New Tool</h2>
-        <button id="my-btn" class="btn btn-primary">Click Me</button>
-    </div>
-`;
-
-export function init() {
-    document.getElementById('my-btn').addEventListener('click', () => {
-        window.Atelier.showToast('Tool successfully integrated!');
-    });
-}
-```
-
-**2. Register the Tool:**
-Add your tool to the array in `/js/registry.js`. The SPA router will automatically build the UI card on the homepage under the correct category and index it for the live search engine:
-```javascript
-{
-    id: 'my-new-tool',
-    title: 'My New Tool',
-    description: 'A brief description for the live search index.',
-    category: 'Developer Utilities'
-}
-```
-
-**3. Update the Service Worker:**
-To ensure your new tool works offline, open `sw.js`, bump the `CACHE_NAME` version (e.g., `'atelier-v4'` to `'atelier-v5'`), and add `'./js/tools/my-new-tool.js'` to the `ASSETS_TO_CACHE` array.
-
 ## 🛡️ License & Privacy
 100% Client-side processing • No analytics • Zero Telemetry
 Built with precision for web developers & designers.
