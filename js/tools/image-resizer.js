@@ -8,9 +8,9 @@ export const html = `<h1>Image Resizer</h1>
 
         <div class="editor-section" id="editorSection">
             <div class="presets-bar">
-                <button class="preset-btn" onclick="applyPreset(1200, 630)">OpenGraph (1200x630)</button>
-                <button class="preset-btn" onclick="applyPreset(1080, 1080)">Square (1080x1080)</button>
-                <button class="preset-btn" onclick="applyPreset(1920, 1080)">Full HD (1920x1080)</button>
+                <button class="preset-btn" id="preset-og">OpenGraph (1200x630)</button>
+                <button class="preset-btn" id="preset-sq">Square (1080x1080)</button>
+                <button class="preset-btn" id="preset-hd">Full HD (1920x1080)</button>
             </div>
 
             <div class="controls-grid">
@@ -32,7 +32,7 @@ export const html = `<h1>Image Resizer</h1>
                 <img id="imgPreview" alt="Preview">
             </div>
 
-            <button class="btn" onclick="downloadResized()">Download Resized Image</button>
+            <button class="btn btn-primary" id="downloadResizedBtn">Download Resized Image</button>
         </div>
     </div>
 
@@ -140,6 +140,12 @@ window.Atelier.setPasteHandler((e) => {
                 widthInput.value = Math.round(val * currentRatio);
             }
         });
+
+        
+        document.getElementById('preset-og').addEventListener('click', () => applyPreset(1200, 630));
+        document.getElementById('preset-sq').addEventListener('click', () => applyPreset(1080, 1080));
+        document.getElementById('preset-hd').addEventListener('click', () => applyPreset(1920, 1080));
+        document.getElementById('downloadResizedBtn').addEventListener('click', downloadResized);
 
         function applyPreset(w, h) {
             aspectRatio.checked = false;
