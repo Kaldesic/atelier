@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /atelier/
+
+Sitemap: https://kaldesic.github.io/atelier/sitemap.xml

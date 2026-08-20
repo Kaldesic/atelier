@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atelier — Minimalist Web Utilities</title>
+    
+    <meta name="description" content="A curated digital workshop for minimalist web tools and utilities.">
+    <meta name="theme-color" content="#0f1115">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self';">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
+    
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-back" id="nav-back" style="display: none;">
+            <a href="/" data-link>← Back to Atelier</a>
+        </nav>
+        
+        <header id="home-header">
+            <h1>Atelier</h1>
+            <p class="subtitle">A curated digital workshop for minimalist web tools and utilities.</p>
+            <div class="privacy-badge">
+                <span class="privacy-dot"></span>
+                100% Private & Client-Side Execution • Zero Telemetry
+            </div>
+        
+            <div class="search-container">
+                <input type="text" id="tool-search" class="search-input" placeholder="Search tools (e.g., 'image', 'svg', 'converter')...">
+            </div>
+        </header>
+
+        <main id="app-root">
+            <!-- Dynamic routing injects content here -->
+        </main>
+    </div>
+
+    <footer>
+        <p>100% Client-side processing • No analytics • Processing strictly in RAM</p>
+        <p>Built with precision for web developers & designers.</p>
+    </footer>
+
+    <script src="/js/core.js"></script>
+    <script type="module" src="/js/app.js"></script>
+</body>
+</html>

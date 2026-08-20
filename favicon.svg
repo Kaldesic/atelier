@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Zaobljeni "A" oblik sa bijelom ispunom i transparentnom pozadinom -->
+  <path fill="#ffffff" d="M 256,90 
+           C 295,90 320,110 338,145 
+           L 430,320 
+           C 455,365 430,410 380,410 
+           C 350,410 330,390 315,360 
+           L 256,242 
+           L 197,360 
+           C 182,390 162,410 132,410 
+           C 82,410 57,365 82,320 
+           L 174,145 
+           C 192,110 217,90 256,90 Z" />
+</svg>
