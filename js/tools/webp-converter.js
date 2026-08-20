@@ -6,10 +6,10 @@ export const html = `<h1>WebP Converter</h1>
             <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg, image/webp" multiple>
         </div>
 
-        <div class="controls-card">
-            <label for="qualitySlider">Output Quality</label>
-            <div class="quality-slider-group">
-                <input type="range" id="qualitySlider" min="10" max="100" value="85">
+        <div class="tool-section">
+            <label for="qualitySlider" class="input-label">Output Quality</label>
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <input type="range" id="qualitySlider" style="flex:1;" min="10" max="100" value="85">
                 <span class="quality-value" id="qualityVal">85%</span>
             </div>
         </div>
@@ -114,15 +114,15 @@ window.Atelier.setPasteHandler((e) => {
                         item.className = 'result-item';
                         
                         const fileInfo = document.createElement('div');
-                        fileInfo.className = 'file-info';
+                        fileInfo.className = 'result-info';
 
                         const fileNameDiv = document.createElement('div');
-                        fileNameDiv.className = 'file-name';
+                        fileNameDiv.className = 'result-name';
                         fileNameDiv.textContent = newFileName;
 
                         const fileSizeDiv = document.createElement('div');
-                        fileSizeDiv.className = 'file-size';
-                        fileSizeDiv.innerHTML = `${originalKB} KB → ${newKB} KB ${savedPct > 0 ? `<span class="badge-saving">(${savedPct}% saved)</span>` : ''}`;
+                        fileSizeDiv.className = 'result-meta';
+                        fileSizeDiv.innerHTML = `${originalKB} KB → ${newKB} KB ${savedPct > 0 ? `<span class="badge badge-success">(${savedPct}% saved)</span>` : ''}`;
 
                         fileInfo.appendChild(fileNameDiv);
                         fileInfo.appendChild(fileSizeDiv);
