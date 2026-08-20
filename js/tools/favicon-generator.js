@@ -11,7 +11,7 @@ export const html = `<h1>Favicon Generator</h1>
 
             <div class="code-box">
                 <div class="code-title">HTML HEAD TAGS</div>
-                <button class="copy-btn" id="copyBtn" onclick="copyHTML()">Copy HTML</button>
+                <button class="copy-btn" id="copyBtn" >Copy HTML</button>
                 <pre id="htmlCode"></pre>
             </div>
         </div>`;
