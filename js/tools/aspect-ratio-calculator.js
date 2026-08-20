@@ -12,27 +12,27 @@ export const html = `<h1>Aspect Ratio Calculator</h1>
         <div class="calculator-card">
             <div class="ratio-row">
                 <div class="input-group">
-                    <label>Ratio Width (W1)</label>
-                    <input type="number" id="rW" value="16" min="0.1" step="any">
+                    <label class="input-label">Ratio Width (W1)</label>
+                    <input type="number" class="input-field" id="rW" value="16" min="0.1" step="any">
                 </div>
                 <div class="input-group">
-                    <label>Ratio Height (H1)</label>
-                    <input type="number" id="rH" value="9" min="0.1" step="any">
+                    <label class="input-label">Ratio Height (H1)</label>
+                    <input type="number" class="input-field" id="rH" value="9" min="0.1" step="any">
                 </div>
             </div>
 
             <div class="dimension-row">
                 <div class="input-group">
-                    <label>Target Width (W2 px)</label>
-                    <input type="number" id="tW" value="1920" min="1">
+                    <label class="input-label">Target Width (W2 px)</label>
+                    <input type="number" class="input-field" id="tW" value="1920" min="1">
                 </div>
                 <div class="input-group">
-                    <label>Target Height (H2 px)</label>
-                    <input type="number" id="tH" min="1">
+                    <label class="input-label">Target Height (H2 px)</label>
+                    <input type="number" class="input-field" id="tH" min="1">
                 </div>
             </div>
 
-            <div class="preview-box"  title="Click to copy dimensions">
+            <div class="preview-box" id="previewBox" title="Click to copy dimensions">
                 <div class="visual-rect" id="visualRect"></div>
                 <div class="result-badge" id="resultText">1920 × 1080 px (Click to copy)</div>
             </div>
