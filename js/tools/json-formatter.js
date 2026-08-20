@@ -6,9 +6,9 @@ export const html = `
 <div class="tool-content" style="display: flex; flex-direction: column; gap: 1rem;">
     <div class="json-controls" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
         <button id="btn-format-2" class="btn">2 Spaces</button>
-        <button id="btn-format-4" class="btn" style="background: var(--surface-2);">4 Spaces</button>
-        <button id="btn-minify" class="btn" style="background: var(--surface-2);">Minify</button>
-        <button id="btn-clear" class="btn" style="background: var(--surface-2);">Clear</button>
+        <button id="btn-format-4" class="btn" style="background: var(--card-bg);">4 Spaces</button>
+        <button id="btn-minify" class="btn" style="background: var(--card-bg);">Minify</button>
+        <button id="btn-clear" class="btn" style="background: var(--card-bg);">Clear</button>
         <button id="btn-copy" class="btn" style="margin-left: auto;">Copy Output</button>
     </div>
     
@@ -16,12 +16,12 @@ export const html = `
     
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; align-items: stretch;">
         <div class="input-pane" style="display: flex; flex-direction: column;">
-            <label style="margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Input</label>
-            <textarea id="json-input" placeholder="Paste your raw JSON here..." style="width: 100%; height: 500px; padding: 1rem; background: var(--surface-2); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-family: monospace; font-size: 0.9rem; resize: vertical; outline: none;"></textarea>
+            <label class="input-label">Input</label>
+            <textarea id="json-input" placeholder="Paste your raw JSON here..." style="width: 100%; height: 500px; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; font-family: monospace; font-size: 0.9rem; resize: vertical; outline: none;"></textarea>
         </div>
         <div class="output-pane" style="display: flex; flex-direction: column;">
-            <label style="margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Output</label>
-            <pre id="json-output" style="width: 100%; height: 500px; margin: 0; padding: 1rem; background: #0d1117; border: 1px solid var(--border-color); color: #c9d1d9; border-radius: 8px; font-family: monospace; font-size: 0.9rem; overflow: auto; white-space: pre-wrap; word-break: break-all; outline: none;"></pre>
+            <label class="input-label">Output</label>
+            <pre id="json-output" style="width: 100%; height: 500px; margin: 0; padding: 1rem; background: #0d1117; border: 1px solid var(--border); color: #c9d1d9; border-radius: 8px; font-family: monospace; font-size: 0.9rem; overflow: auto; white-space: pre-wrap; word-break: break-all; outline: none;"></pre>
         </div>
     </div>
 </div>
@@ -34,7 +34,7 @@ export const html = `
     .json-key { color: #7ee787; font-weight: 500; }
     
     #json-input:focus, #json-output:focus-visible {
-        border-color: var(--primary-color);
+        border-color: var(--accent);
     }
 </style>
 `;
@@ -54,8 +54,8 @@ export function init() {
     let currentParsed = null;
 
     function setActiveBtn(btn) {
-        formatBtns.forEach(b => b.style.background = 'var(--surface-2)');
-        btn.style.background = 'var(--primary-color)';
+        formatBtns.forEach(b => b.style.background = 'var(--card-bg)');
+        btn.style.background = 'var(--accent)';
     }
 
     function syntaxHighlight(json) {
