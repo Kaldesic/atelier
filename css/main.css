@@ -529,3 +529,120 @@ footer a:hover {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
+
+/* Shared Tool Layout Classes */
+.presets-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.preset-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preset-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  grid-column: span 2;
+  margin-top: -0.5rem;
+  font-size: 0.9rem;
+}
+
+.calculator-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.ratio-row, .dimension-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.preview-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: rgba(0,0,0,0.2);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  min-height: 200px;
+}
+
+.preview-box:hover {
+  border-color: var(--accent);
+}
+
+.visual-rect {
+  background: var(--accent);
+  opacity: 0.2;
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.result-badge {
+  background: var(--card-bg);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+
+/* Additional Tool Styles */
+.editor-container { margin-bottom: 1rem; }
+.stats-bar { 
+  display: flex; 
+  align-items: center; 
+  gap: 1rem; 
+  margin-bottom: 1rem; 
+  font-size: 0.85rem; 
+  background: var(--card-bg); 
+  padding: 0.5rem 1rem; 
+  border-radius: 6px; 
+  border: 1px solid var(--border);
+}
+.stats-text { color: var(--text-muted); }
+.stats-badge { color: var(--success); font-weight: 500; }
+.actions { 
+  display: flex; 
+  gap: 1rem; 
+  margin-bottom: 1.5rem; 
+}
+
+.btn[disabled], .preset-btn[disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+}
