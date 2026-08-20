@@ -647,19 +647,29 @@ footer a:hover {
   pointer-events: none;
 }
 
-/* Mobilni prikaži (po defaultu): 1 kolona */
-#app-root {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+/* Styling kategorija */
+.category-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
 }
 
-/* Desktop prikaz (ekrani širi od 768px): Kolone jedna pored druge */
+/* Mobilni prikaz (default): jedna kolona */
+.categories-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Desktop prikaz: kategorije jedna pored druge u kolone */
 @media (min-width: 768px) {
-  #app-root {
+  .categories-container {
     display: grid;
-    /* Automatski kreira kolone širine min 320px */
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     align-items: start;
     gap: 2rem;
   }
