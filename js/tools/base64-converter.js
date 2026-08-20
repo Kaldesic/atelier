@@ -7,19 +7,19 @@ export const html = `<h1>Base64 Encoder / Decoder</h1>
         </div>
 
         <div style="margin-bottom: 1.5rem;">
-            <textarea id="base64Input" placeholder="...or paste raw Base64 string here to decode" style="width: 100%; height: 120px; background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 1rem; font-family: monospace; font-size: 0.85rem; resize: vertical;"></textarea>
+            <textarea id="base64Input" placeholder="...or paste raw Base64 string here to decode" class="textarea-field" style="height: 120px;"></textarea>
             <button id="decodeBtn" class="btn btn-primary" style="margin-top: 0.5rem;">Decode to File</button>
         </div>
 
         <div class="output-section" id="outputSection">
             <div class="code-box">
                 <div class="code-title">Raw Base64</div>
-                <button class="copy-btn" onclick="copyResult('rawBase64')">Copy</button>
+                <button class="copy-btn" id="copyRawBtn">Copy</button>
                 <pre id="rawBase64"></pre>
             </div>
             <div class="code-box">
                 <div class="code-title">Data URL</div>
-                <button class="copy-btn" onclick="copyResult('dataUrl')">Copy</button>
+                <button class="copy-btn" id="copyDataUrlBtn">Copy</button>
                 <pre id="dataUrl"></pre>
             </div>
         </div>`;
@@ -97,6 +97,10 @@ const fileInput = document.getElementById('fileInput');
                 showToast('Copied to clipboard!');
             }).catch(() => showToast('Failed to copy', true));
         }
+
+        
+        document.getElementById('copyRawBtn').addEventListener('click', () => copyResult('rawBase64'));
+        document.getElementById('copyDataUrlBtn').addEventListener('click', () => copyResult('dataUrl'));
 
         decodeBtn.addEventListener('click', () => {
             const input = base64Input.value.trim();
