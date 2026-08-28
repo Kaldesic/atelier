@@ -73,8 +73,48 @@ async function route() {
 }
 
 
+function getFavorites() {
+    try {
+        const raw = localStorage.getItem('atelier-favorites');
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
+}
+
+function toggleFavorite(toolId) {
+    let favs = getFavorites();
+    if (favs.includes(toolId)) {
+        favs = favs.filter(id => id !== toolId);
+    } else {
+        favs.push(toolId);
+    }
+    localStorage.setItem('atelier-favorites', JSON.stringify(favs));
+    renderGrid(searchInput ? searchInput.value : '');
+}
+
+const STAR_OUTLINE = `<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+
+function renderToolCard(tool, isPinned) {
+    return `
+        <a href="#/${tool.id}" class="tool-card" data-link>
+            <div style="flex: 1;">
+                <div class="tool-title">${tool.title}</div>
+                <div class="tool-desc">${tool.description}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <button class="tool-pin-btn ${isPinned ? 'is-pinned' : ''}" data-pin-id="${tool.id}" title="${isPinned ? 'Unpin tool' : 'Pin to favorites'}" aria-label="Pin tool">
+                    ${STAR_OUTLINE}
+                </button>
+                <div class="arrow">→</div>
+            </div>
+        </a>
+    `;
+}
+
 function renderGrid(searchQuery = '') {
     const basePath = '#/';
+    const favorites = getFavorites();
     
     const lowerQuery = searchQuery.toLowerCase();
     const filteredTools = TOOLS_REGISTRY.filter(t => 
@@ -87,6 +127,23 @@ function renderGrid(searchQuery = '') {
         return;
     }
 
+    let html = '';
+
+    // If there are pinned tools and no search filter, show pinned shelf at top
+    if (favorites.length > 0 && !searchQuery) {
+        const pinnedTools = TOOLS_REGISTRY.filter(t => favorites.includes(t.id));
+        if (pinnedTools.length > 0) {
+            html += `
+                <div class="category-group pinned-group">
+                    <h2 class="category-title">★ Pinned Favorites</h2>
+                    <div class="tools-grid">
+                        ${pinnedTools.map(tool => renderToolCard(tool, true)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    }
+
     const grouped = filteredTools.reduce((acc, tool) => {
         const cat = tool.category || 'Other';
         if (!acc[cat]) acc[cat] = [];
@@ -94,27 +151,29 @@ function renderGrid(searchQuery = '') {
         return acc;
     }, {});
 
-    let html = '<div class="categories-container">';
+    html += '<div class="categories-container">';
     for (const [category, tools] of Object.entries(grouped)) {
         html += `
             <div class="category-group">
                 <h2 class="category-title">${category}</h2>
                 <div class="tools-grid">
-                    ${tools.map(tool => `
-                        <a href="#/${tool.id}" class="tool-card" data-link>
-                            <div>
-                                <div class="tool-title">${tool.title}</div>
-                                <div class="tool-desc">${tool.description}</div>
-                            </div>
-                            <div class="arrow">→</div>
-                        </a>
-                    `).join('')}
+                    ${tools.map(tool => renderToolCard(tool, favorites.includes(tool.id))).join('')}
                 </div>
             </div>
         `;
     }
     html += '</div>';
     appRoot.innerHTML = html;
+
+    // Attach pin toggle event listeners
+    appRoot.querySelectorAll('.tool-pin-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = e.currentTarget.getAttribute('data-pin-id');
+            if (id) toggleFavorite(id);
+        });
+    });
 }
 
 const searchInput = document.getElementById('tool-search');
