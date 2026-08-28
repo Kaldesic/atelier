@@ -2,6 +2,13 @@
 export const TOOLS_REGISTRY = [
   // --- 1. Image & Media Studio ---
   {
+    id: 'batch-processor',
+    title: 'Batch Image & File Processor',
+    description: 'Bulk convert, resize, rename, and package dozens of images into a ZIP file.',
+    path: 'batch-processor',
+    category: 'Image & Media Studio'
+  },
+  {
     id: 'image-compressor',
     title: 'Image Compressor',
     description: 'Reduce image file size with configurable quality and size comparison.',
