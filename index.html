@@ -21,24 +21,44 @@
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
     
-    <link rel="stylesheet" href="css/main.css?v=12">
+    <script>
+        // Initialize theme before DOM renders to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('atelier-theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme ? savedTheme : (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+
+    <link rel="stylesheet" href="css/main.css?v=13">
 </head>
 <body>
     <div class="container">
-        <nav class="nav-back" id="nav-back" style="display: none;">
+        <nav class="nav-back nav-bar" id="nav-back" style="display: none;">
             <a href="#" data-link>← Back to Atelier</a>
+            <button class="theme-toggle-btn" id="theme-toggle-tool" title="Toggle Dark/Light Mode" aria-label="Toggle theme"></button>
         </nav>
         
         <header id="home-header">
-            <h1>Atelier</h1>
-            <p class="subtitle">A curated digital workshop for minimalist web tools and utilities.</p>
+            <div class="header-top">
+                <div>
+                    <h1>Atelier</h1>
+                    <p class="subtitle">A curated digital workshop for minimalist web tools and utilities.</p>
+                </div>
+                <button class="theme-toggle-btn" id="theme-toggle-home" title="Toggle Dark/Light Mode" aria-label="Toggle theme"></button>
+            </div>
+
             <div class="privacy-badge">
                 <span class="privacy-dot"></span>
                 100% Private & Client-Side Execution • Zero Telemetry
             </div>
         
             <div class="search-container">
-                <input type="text" id="tool-search" class="search-input" placeholder="Search tools (e.g., 'image', 'svg', 'converter')...">
+                <div class="search-wrapper">
+                    <input type="text" id="tool-search" class="search-input" placeholder="Search tools (press '/' or 'Ctrl+K')...">
+                    <span class="search-kbd">/</span>
+                </div>
             </div>
         </header>
 
