@@ -1,4 +1,4 @@
-const CACHE_NAME = 'atelier-v17';
+const CACHE_NAME = 'atelier-v18';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -34,7 +34,8 @@ const ASSETS_TO_CACHE = [
   './js/tools/lorem-generator.js',
   './js/tools/qr-code-studio.js',
   './js/tools/text-diff-case.js',
-  './js/tools/image-to-pdf.js'
+  './js/tools/image-to-pdf.js',
+  './js/tools/batch-processor.js'
 ];
 
 // 1. Instalacija - keširanje osnovnih resursa i skripti
