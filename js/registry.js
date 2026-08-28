@@ -119,5 +119,40 @@ export const TOOLS_REGISTRY = [
     description: 'Write GFM Markdown with live visual preview, word stats, and HTML export.',
     path: 'markdown-previewer',
     category: 'Developer Utilities'
+  },
+  {
+    id: 'uuid-generator',
+    title: 'UUID & Secret Token Generator',
+    description: 'Generate RFC4122 UUID v4, NanoID, cryptographic hashes, and passphrases.',
+    path: 'uuid-generator',
+    category: 'Developer Utilities'
+  },
+  {
+    id: 'regex-tester',
+    title: 'Regex Tester & Analyzer',
+    description: 'Test JavaScript regex patterns with match highlights, capture groups, and substitution.',
+    path: 'regex-tester',
+    category: 'Developer Utilities'
+  },
+  {
+    id: 'gradient-generator',
+    title: 'CSS Gradient & Mesh Generator',
+    description: 'Design linear, radial, and conic gradients with live canvas preview and CSS export.',
+    path: 'gradient-generator',
+    category: 'Typography & Layout'
+  },
+  {
+    id: 'jwt-decoder',
+    title: 'JWT Debugger & Inspector',
+    description: 'Decode header and payload claims of JSON Web Tokens client-side with expiration checks.',
+    path: 'jwt-decoder',
+    category: 'Developer Utilities'
+  },
+  {
+    id: 'lorem-generator',
+    title: 'Lorem & Mock Data Generator',
+    description: 'Generate placeholder text, sentences, dummy user records, and product JSON datasets.',
+    path: 'lorem-generator',
+    category: 'Developer Utilities'
   }
 ];
