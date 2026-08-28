@@ -84,5 +84,12 @@ export const TOOLS_REGISTRY = [
     description: 'Format, validate and syntax-highlight JSON data.',
     path: 'json-formatter',
     category: 'Developer Utilities'
+  },
+  {
+    id: 'url-encoder',
+    title: 'URL Encoder & Query Parser',
+    description: 'Encode, decode URLs, and parse complex query parameters.',
+    path: 'url-encoder',
+    category: 'Developer Utilities'
   }
 ];
