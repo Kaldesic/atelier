@@ -52,19 +52,25 @@ body {
 
 @media (min-width: 768px) {
   .container {
-    max-width: 900px;
+    max-width: 920px;
   }
 }
 
 @media (min-width: 1080px) {
   .container {
-    max-width: 1180px;
+    max-width: 1200px;
   }
 }
 
-@media (min-width: 1360px) {
+@media (min-width: 1400px) {
   .container {
-    max-width: 1320px;
+    max-width: 1560px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .container {
+    max-width: 1760px;
   }
 }
 
@@ -125,17 +131,31 @@ p.subtitle {
   border-radius: 50%;
 }
 
-/* Dynamic Grid / Cards - Desktop Multi-Column Responsive */
+/* Dynamic Grid / Cards - Desktop 4-Column Responsive Layout */
 .tools-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.75rem;
 }
 
-@media (min-width: 680px) {
+@media (min-width: 640px) {
   .tools-grid {
-    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.85rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tools-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.9rem;
+  }
+}
+
+@media (min-width: 1360px) {
+  .tools-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
   }
 }
 
