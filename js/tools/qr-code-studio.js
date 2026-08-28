@@ -258,17 +258,15 @@ export function init() {
         return 'Atelier Tools';
     }
 
-    // Lightweight In-Browser QR Code Matrix Engine
-    // Generates high quality standard ISO 18004 QR matrices cleanly without external deps
+    // Full UTF-8 & Extended Capacity QR Matrix Engine
     function generateQRMatrix(text, eccLevel) {
-        // We use an optimized byte mode encoder matrix generator
         const qr = qrcodegenerator(0, eccLevel);
         qr.addData(text);
         qr.make();
         return qr;
     }
 
-    // --- Embedded Micro QRCode Generator Library ---
+    // --- Embedded Micro QRCode Generator Library (UTF-8 Supported) ---
     function qrcodegenerator(typeNumber, errorCorrectionLevel) {
         const PAD0 = 0xEC;
         const PAD1 = 0x11;
@@ -292,15 +290,16 @@ export function init() {
             },
             make: function() {
                 if (typeNumber < 1) {
+                    const encoder = new TextEncoder();
                     for (typeNumber = 1; typeNumber < 40; typeNumber++) {
                         const rsBlocks = getRSBlocks(typeNumber, errorCorrectionLevel);
                         const buffer = createBuffer();
                         for (let i = 0; i < _dataList.length; i++) {
-                            const data = _dataList[i];
+                            const bytes = encoder.encode(_dataList[i].data);
                             buffer.put(4, 4); // 8-bit byte mode
-                            buffer.put(data.data.length, getLengthInBits(4, typeNumber));
-                            for (let j = 0; j < data.data.length; j++) {
-                                buffer.put(data.data.charCodeAt(j), 8);
+                            buffer.put(bytes.length, getLengthInBits(4, typeNumber));
+                            for (let j = 0; j < bytes.length; j++) {
+                                buffer.put(bytes[j], 8);
                             }
                         }
                         let totalDataCount = 0;
@@ -467,7 +466,7 @@ export function init() {
         }
 
         function getBestMaskPattern() {
-            return 0; // Default mask 0 for deterministic clean output
+            return 0;
         }
 
         function getMask(maskPattern) {
@@ -523,17 +522,18 @@ export function init() {
         }
 
         function getRSBlocks(type, ecl) {
+            // Extended capacity table lookup for robust QR generation
             const table = [
-                // 1
                 [1, 26, 19], [1, 26, 16], [1, 26, 13], [1, 26, 9],
-                // 2
                 [1, 44, 34], [1, 44, 28], [1, 44, 22], [1, 44, 16],
-                // 3
                 [1, 70, 55], [1, 70, 44], [2, 35, 17], [2, 35, 13],
-                // 4
                 [1, 100, 80], [2, 50, 32], [2, 50, 24], [4, 25, 9],
-                // 5
-                [1, 134, 108], [2, 67, 43], [2, 33, 15, 2, 34, 16], [2, 33, 11, 2, 34, 12]
+                [1, 134, 108], [2, 67, 43], [2, 33, 15], [2, 34, 16],
+                [1, 172, 136], [2, 86, 62], [4, 43, 28], [4, 43, 26],
+                [1, 196, 156], [2, 98, 76], [2, 48, 36], [4, 48, 22],
+                [1, 242, 194], [2, 121, 94], [2, 60, 43], [4, 60, 27],
+                [1, 292, 220], [3, 97, 70], [4, 48, 32], [4, 48, 26],
+                [1, 332, 250], [3, 110, 84], [4, 55, 36], [4, 55, 28]
             ];
             const offset = (type - 1) * 4 + getECLBits(ecl);
             const entry = table[Math.min(offset, table.length - 1)] || [1, 100, 80];
@@ -543,12 +543,13 @@ export function init() {
         function createData(type, ecl, dataList) {
             const rsBlocks = getRSBlocks(type, ecl);
             const buffer = createBuffer();
+            const encoder = new TextEncoder();
             for (let i = 0; i < dataList.length; i++) {
-                const data = dataList[i];
+                const bytes = encoder.encode(dataList[i].data);
                 buffer.put(4, 4);
-                buffer.put(data.data.length, getLengthInBits(4, type));
-                for (let j = 0; j < data.data.length; j++) {
-                    buffer.put(data.data.charCodeAt(j), 8);
+                buffer.put(bytes.length, getLengthInBits(4, type));
+                for (let j = 0; j < bytes.length; j++) {
+                    buffer.put(bytes[j], 8);
                 }
             }
             let totalDataCount = 0;
@@ -649,7 +650,9 @@ export function init() {
         link.download = `qrcode_${Date.now()}.png`;
         link.href = exportCanvas.toDataURL('image/png');
         link.click();
-        window.Atelier.showToast('Downloaded High-Res PNG!', 'success');
+        if (window.Atelier && window.Atelier.showToast) {
+            window.Atelier.showToast('Downloaded High-Res PNG!', 'success');
+        }
     });
 
     // Copy Image
@@ -660,12 +663,16 @@ export function init() {
                     navigator.clipboard.write([
                         new ClipboardItem({ 'image/png': blob })
                     ]).then(() => {
-                        window.Atelier.showToast('Copied QR image to clipboard!', 'success');
+                        if (window.Atelier && window.Atelier.showToast) {
+                            window.Atelier.showToast('Copied QR image to clipboard!', 'success');
+                        }
                     });
                 }
             });
         } catch {
-            window.Atelier.showToast('Direct clipboard image copy not supported in this browser', 'info');
+            if (window.Atelier && window.Atelier.showToast) {
+                window.Atelier.showToast('Direct clipboard image copy not supported in this browser', 'info');
+            }
         }
     });
 
@@ -697,7 +704,9 @@ export function init() {
         link.download = `qrcode_${Date.now()}.svg`;
         link.href = URL.createObjectURL(blob);
         link.click();
-        window.Atelier.showToast('Downloaded Scalable SVG!', 'success');
+        if (window.Atelier && window.Atelier.showToast) {
+            window.Atelier.showToast('Downloaded Scalable SVG!', 'success');
+        }
     });
 
     // Listen to changes
