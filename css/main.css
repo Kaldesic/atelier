@@ -838,9 +838,117 @@ footer a:hover {
   justify-content: center;
 }
 
+/* Category Filter Bar */
+.category-filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+  scrollbar-width: none;
+}
+
+.category-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.cat-filter-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.4rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.cat-filter-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.cat-filter-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0f1115;
+  font-weight: 600;
+}
+
+/* Global Drag & Drop Overlay */
+#global-dropzone {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 17, 21, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: 4px dashed var(--accent);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#global-dropzone.active {
+  display: flex;
+  pointer-events: auto;
+}
+
+.dropzone-box {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  padding: 2.5rem 3rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+.dropzone-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.dropzone-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.dropzone-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Install PWA Prompt Bar */
+.pwa-install-banner {
+  display: none;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pwa-install-banner.show {
+  display: flex;
+}
+
 @media (max-width: 640px) {
   .shadow-layout-grid,
-  .markdown-split-view {
+  .markdown-split-view,
+  .jwt-split-grid,
+  .gradient-layout-grid {
     grid-template-columns: 1fr !important;
   }
 }
