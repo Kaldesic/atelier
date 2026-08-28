@@ -105,5 +105,19 @@ export const TOOLS_REGISTRY = [
     description: 'Escape, unescape, and sanitize HTML entities and special characters.',
     path: 'html-entity-encoder',
     category: 'Developer Utilities'
+  },
+  {
+    id: 'box-shadow-generator',
+    title: 'CSS Box Shadow & Glass Generator',
+    description: 'Design layered shadows and glassmorphic cards with copyable CSS & Tailwind.',
+    path: 'box-shadow-generator',
+    category: 'Typography & Layout'
+  },
+  {
+    id: 'markdown-previewer',
+    title: 'Markdown Live Previewer',
+    description: 'Write GFM Markdown with live visual preview, word stats, and HTML export.',
+    path: 'markdown-previewer',
+    category: 'Developer Utilities'
   }
 ];
