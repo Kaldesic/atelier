@@ -743,6 +743,91 @@ footer a:hover {
   break-inside: avoid;
 }
 
+.category-group.pinned-group {
+  grid-column: 1 / -1;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem 1.25rem 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.category-group.pinned-group .category-title {
+  margin-top: 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Tool card pinned button */
+.tool-card {
+  position: relative;
+}
+
+.tool-pin-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.tool-card:hover .tool-pin-btn {
+  opacity: 1;
+}
+
+.tool-pin-btn:hover {
+  color: var(--accent);
+  transform: scale(1.15);
+}
+
+.tool-pin-btn.is-pinned {
+  color: #eab308;
+  opacity: 1;
+}
+
+.tool-pin-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+/* WCAG Badges */
+.wcag-badge {
+  font-size: 0.78rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.wcag-badge.badge-pass {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.wcag-badge.badge-fail {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
 @media (min-width: 768px) {
   .container {
     max-width: 800px;
@@ -754,3 +839,4 @@ footer a:hover {
     column-gap: 1.5rem;
   }
 }
+
