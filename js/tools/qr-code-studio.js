@@ -128,7 +128,7 @@ export const html = `
             <!-- Live QR Canvas Display & Export Area -->
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
                 <div id="qrPreviewWrapper" style="padding: 1rem; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem;">
-                    <canvas id="qrCanvas" width="220" height="220" style="display: block; max-width: 100%; height: auto;"></canvas>
+                    <canvas id="qrCanvas" width="220" height="220" style="display: block; max-width: 100%; height: auto;\"></canvas>
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%;">
@@ -140,6 +140,576 @@ export const html = `
         </div>
     </div>
 `;
+
+/* =========================================================================
+   Standalone ISO/IEC 18004 QR Code Generation Engine (with GF(256) Reed-Solomon)
+   ========================================================================= */
+const QR_ENGINE = (() => {
+    // Galois Field GF(256) Tables
+    const EXP_TABLE = new Uint8Array(512);
+    const LOG_TABLE = new Uint8Array(256);
+
+    let x = 1;
+    for (let i = 0; i < 255; i++) {
+        EXP_TABLE[i] = x;
+        EXP_TABLE[i + 255] = x;
+        LOG_TABLE[x] = i;
+        x <<= 1;
+        if (x & 256) {
+            x ^= 0x11D; // Primitive polynomial: x^8 + x^4 + x^3 + x^2 + 1 (285)
+        }
+    }
+    LOG_TABLE[0] = 0;
+
+    function gmul(a, b) {
+        if (a === 0 || b === 0) return 0;
+        return EXP_TABLE[LOG_TABLE[a] + LOG_TABLE[b]];
+    }
+
+    function createGeneratorPoly(numECBytes) {
+        let poly = new Uint8Array([1]);
+        for (let i = 0; i < numECBytes; i++) {
+            const next = new Uint8Array(poly.length + 1);
+            const factor = EXP_TABLE[i];
+            for (let j = 0; j < poly.length; j++) {
+                next[j] ^= poly[j];
+                next[j + 1] ^= gmul(poly[j], factor);
+            }
+            poly = next;
+        }
+        return poly;
+    }
+
+    function calculateReedSolomon(data, numECBytes) {
+        const gen = createGeneratorPoly(numECBytes);
+        const res = new Uint8Array(numECBytes);
+
+        for (let i = 0; i < data.length; i++) {
+            const factor = data[i] ^ res[0];
+            for (let j = 0; j < numECBytes - 1; j++) {
+                res[j] = res[j + 1] ^ gmul(gen[j + 1], factor);
+            }
+            res[numECBytes - 1] = gmul(gen[numECBytes], factor);
+        }
+        return res;
+    }
+
+    // Capacity & Block definitions per version & ECC level (L:0, M:1, Q:2, H:3)
+    const VERSION_SPECS = [
+        null,
+        // 1
+        [ [26, 7, 1, 19, 0, 0], [26, 10, 1, 16, 0, 0], [26, 13, 1, 13, 0, 0], [26, 17, 1, 9, 0, 0] ],
+        // 2
+        [ [44, 10, 1, 34, 0, 0], [44, 16, 1, 28, 0, 0], [44, 22, 1, 22, 0, 0], [44, 28, 1, 16, 0, 0] ],
+        // 3
+        [ [70, 15, 1, 55, 0, 0], [70, 26, 1, 44, 0, 0], [70, 18, 2, 17, 0, 0], [70, 22, 2, 13, 0, 0] ],
+        // 4
+        [ [100, 20, 1, 80, 0, 0], [100, 18, 2, 32, 0, 0], [100, 26, 2, 24, 0, 0], [100, 16, 4, 9, 0, 0] ],
+        // 5
+        [ [134, 26, 1, 108, 0, 0], [134, 24, 2, 43, 0, 0], [134, 18, 2, 15, 2, 16], [134, 22, 2, 11, 2, 12] ],
+        // 6
+        [ [172, 18, 2, 68, 0, 0], [172, 16, 4, 27, 0, 0], [172, 24, 4, 19, 0, 0], [172, 28, 4, 15, 0, 0] ],
+        // 7
+        [ [196, 20, 2, 78, 0, 0], [196, 18, 4, 31, 0, 0], [196, 18, 2, 14, 4, 15], [196, 26, 4, 13, 1, 14] ],
+        // 8
+        [ [242, 24, 2, 97, 0, 0], [242, 22, 2, 38, 2, 39], [242, 22, 4, 18, 2, 19], [242, 26, 4, 14, 2, 15] ],
+        // 9
+        [ [292, 30, 2, 116, 0, 0], [292, 22, 3, 36, 2, 37], [292, 20, 4, 16, 4, 17], [292, 24, 4, 12, 4, 13] ],
+        // 10
+        [ [346, 18, 2, 68, 2, 69], [346, 26, 4, 43, 1, 44], [346, 24, 6, 19, 2, 20], [346, 28, 6, 15, 2, 16] ],
+        // 11
+        [ [404, 20, 4, 81, 0, 0], [404, 30, 1, 50, 4, 51], [404, 28, 4, 22, 4, 23], [404, 24, 3, 12, 8, 13] ],
+        // 12
+        [ [466, 24, 2, 92, 2, 93], [466, 22, 6, 36, 2, 37], [466, 26, 4, 20, 6, 21], [466, 28, 7, 14, 4, 15] ],
+        // 13
+        [ [532, 26, 4, 107, 0, 0], [532, 22, 8, 37, 1, 38], [532, 24, 8, 20, 4, 21], [532, 22, 12, 11, 4, 12] ],
+        // 14
+        [ [581, 30, 3, 115, 1, 116], [581, 24, 4, 40, 5, 41], [581, 20, 11, 16, 5, 17], [581, 24, 11, 12, 5, 13] ],
+        // 15
+        [ [655, 22, 5, 87, 1, 88], [655, 24, 5, 41, 5, 42], [655, 30, 5, 24, 7, 25], [655, 24, 11, 12, 7, 13] ],
+        // 16
+        [ [733, 24, 5, 98, 1, 99], [733, 28, 7, 45, 3, 46], [733, 24, 15, 19, 2, 20], [733, 30, 3, 15, 13, 16] ],
+        // 17
+        [ [815, 28, 1, 107, 5, 108], [815, 28, 10, 46, 1, 47], [815, 28, 1, 22, 15, 23], [815, 28, 2, 14, 17, 15] ],
+        // 18
+        [ [901, 30, 5, 120, 1, 121], [901, 26, 9, 43, 4, 44], [901, 28, 17, 22, 1, 23], [901, 28, 2, 14, 19, 15] ],
+        // 19
+        [ [991, 28, 3, 113, 4, 114], [991, 26, 3, 44, 11, 45], [991, 26, 17, 21, 4, 22], [991, 26, 9, 13, 16, 14] ],
+        // 20
+        [ [1085, 28, 3, 107, 5, 108], [1085, 26, 3, 41, 13, 42], [1085, 30, 15, 24, 5, 25], [1085, 28, 15, 15, 10, 16] ]
+    ];
+
+    const ALIGNMENT_PATTERN_POS = [
+        [], [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34],
+        [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50],
+        [6, 30, 54], [6, 32, 58], [6, 34, 62], [6, 26, 46, 66],
+        [6, 26, 48, 70], [6, 26, 50, 74], [6, 30, 54, 78],
+        [6, 30, 56, 82], [6, 30, 58, 86], [6, 34, 62, 90]
+    ];
+
+    const ECC_LEVEL_MAP = {
+        'L': { index: 0, formatBits: 1 },
+        'M': { index: 1, formatBits: 0 },
+        'Q': { index: 2, formatBits: 3 },
+        'H': { index: 3, formatBits: 2 }
+    };
+
+    class BitBuffer {
+        constructor() {
+            this.buffer = [];
+            this.length = 0;
+        }
+
+        put(num, len) {
+            for (let i = 0; i < len; i++) {
+                this.putBit(((num >>> (len - i - 1)) & 1) === 1);
+            }
+        }
+
+        putBit(bit) {
+            const bufIndex = Math.floor(this.length / 8);
+            if (this.buffer.length <= bufIndex) this.buffer.push(0);
+            if (bit) this.buffer[bufIndex] |= (0x80 >>> (this.length % 8));
+            this.length++;
+        }
+
+        getBytes() {
+            return new Uint8Array(this.buffer);
+        }
+    }
+
+    function encodeUTF8(str) {
+        const utf8 = [];
+        for (let i = 0; i < str.length; i++) {
+            let charcode = str.charCodeAt(i);
+            if (charcode < 0x80) utf8.push(charcode);
+            else if (charcode < 0x800) {
+                utf8.push(0xc0 | (charcode >> 6),
+                          0x80 | (charcode & 0x3f));
+            } else if (charcode < 0xd800 || charcode >= 0xe000) {
+                utf8.push(0xe0 | (charcode >> 12),
+                          0x80 | ((charcode >> 6) & 0x3f),
+                          0x80 | (charcode & 0x3f));
+            } else {
+                i++;
+                charcode = 0x10000 + (((charcode & 0x3ff) << 10) | (str.charCodeAt(i) & 0x3ff));
+                utf8.push(0xf0 | (charcode >> 18),
+                          0x80 | ((charcode >> 12) & 0x3f),
+                          0x80 | ((charcode >> 6) & 0x3f),
+                          0x80 | (charcode & 0x3f));
+            }
+        }
+        return new Uint8Array(utf8);
+    }
+
+    function determineVersion(dataLength, eccIndex) {
+        for (let v = 1; v < VERSION_SPECS.length; v++) {
+            const spec = VERSION_SPECS[v][eccIndex];
+            const maxDataCW = (spec[2] * spec[3]) + (spec[4] * spec[5]);
+            const lengthBits = (v < 10) ? 8 : 16;
+            const requiredBits = 4 + lengthBits + (dataLength * 8);
+            if (requiredBits <= maxDataCW * 8) {
+                return v;
+            }
+        }
+        return VERSION_SPECS.length - 1;
+    }
+
+    function createDataCodewords(rawBytes, version, eccIndex) {
+        const spec = VERSION_SPECS[version][eccIndex];
+        const totalDataCW = (spec[2] * spec[3]) + (spec[4] * spec[5]);
+        const bitBuf = new BitBuffer();
+
+        bitBuf.put(0x04, 4); // Byte Mode
+        const lengthBits = (version < 10) ? 8 : 16;
+        bitBuf.put(rawBytes.length, lengthBits);
+
+        for (let i = 0; i < rawBytes.length; i++) {
+            bitBuf.put(rawBytes[i], 8);
+        }
+
+        const totalDataBits = totalDataCW * 8;
+        const termLen = Math.min(4, totalDataBits - bitBuf.length);
+        bitBuf.put(0, termLen);
+
+        while (bitBuf.length % 8 !== 0) {
+            bitBuf.putBit(false);
+        }
+
+        const PAD0 = 0xEC;
+        const PAD1 = 0x11;
+        let padFlag = true;
+        while (bitBuf.length < totalDataBits) {
+            bitBuf.put(padFlag ? PAD0 : PAD1, 8);
+            padFlag = !padFlag;
+        }
+
+        return bitBuf.getBytes();
+    }
+
+    function generateInterleavedCodewords(dataBytes, version, eccIndex) {
+        const spec = VERSION_SPECS[version][eccIndex];
+        const ecCWCount = spec[1];
+        const g1Blocks = spec[2];
+        const g1DataCW = spec[3];
+        const g2Blocks = spec[4];
+        const g2DataCW = spec[5];
+        const totalBlocks = g1Blocks + g2Blocks;
+
+        const dataBlocks = [];
+        const ecBlocks = [];
+        let offset = 0;
+
+        for (let i = 0; i < g1Blocks; i++) {
+            const block = dataBytes.slice(offset, offset + g1DataCW);
+            dataBlocks.push(block);
+            ecBlocks.push(calculateReedSolomon(block, ecCWCount));
+            offset += g1DataCW;
+        }
+
+        for (let i = 0; i < g2Blocks; i++) {
+            const block = dataBytes.slice(offset, offset + g2DataCW);
+            dataBlocks.push(block);
+            ecBlocks.push(calculateReedSolomon(block, ecCWCount));
+            offset += g2DataCW;
+        }
+
+        const maxDataLen = Math.max(g1DataCW, g2DataCW);
+        const finalCodewords = [];
+
+        for (let i = 0; i < maxDataLen; i++) {
+            for (let b = 0; b < totalBlocks; b++) {
+                if (i < dataBlocks[b].length) {
+                    finalCodewords.push(dataBlocks[b][i]);
+                }
+            }
+        }
+
+        for (let i = 0; i < ecCWCount; i++) {
+            for (let b = 0; b < totalBlocks; b++) {
+                finalCodewords.push(ecBlocks[b][i]);
+            }
+        }
+
+        return new Uint8Array(finalCodewords);
+    }
+
+    const MASK_FNS = [
+        (r, c) => (r + c) % 2 === 0,
+        (r, c) => r % 2 === 0,
+        (r, c) => c % 3 === 0,
+        (r, c) => (r + c) % 3 === 0,
+        (r, c) => (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0,
+        (r, c) => ((r * c) % 2) + ((r * c) % 3) === 0,
+        (r, c) => (((r * c) % 2) + ((r * c) % 3)) % 2 === 0,
+        (r, c) => (((r + c) % 2) + ((r * c) % 3)) % 2 === 0
+    ];
+
+    function getBCHTypeInfo(data) {
+        let d = data << 10;
+        const G = 0x537;
+        for (let i = 4; i >= 0; i--) {
+            if ((d >> (i + 10)) & 1) {
+                d ^= (G << i);
+            }
+        }
+        return ((data << 10) | d) ^ 0x5412;
+    }
+
+    function getBCHTypeNumber(version) {
+        let d = version << 12;
+        const G = 0x1F25;
+        for (let i = 5; i >= 0; i--) {
+            if ((d >> (i + 12)) & 1) {
+                d ^= (G << i);
+            }
+        }
+        return (version << 12) | d;
+    }
+
+    class QRCodeMatrix {
+        constructor(version, eccLevel) {
+            this.version = version;
+            this.eccLevel = eccLevel;
+            this.moduleCount = version * 4 + 17;
+            this.modules = Array.from({ length: this.moduleCount }, () => new Array(this.moduleCount).fill(null));
+            this.isReserved = Array.from({ length: this.moduleCount }, () => new Array(this.moduleCount).fill(false));
+        }
+
+        getModuleCount() {
+            return this.moduleCount;
+        }
+
+        isDark(row, col) {
+            return this.modules[row][col] === true;
+        }
+
+        placeFinderPattern(row, col) {
+            for (let r = -1; r <= 7; r++) {
+                for (let c = -1; c <= 7; c++) {
+                    const nr = row + r;
+                    const nc = col + c;
+                    if (nr >= 0 && nr < this.moduleCount && nc >= 0 && nc < this.moduleCount) {
+                        if (r >= 0 && r <= 6 && c >= 0 && c <= 6) {
+                            const isBlack = (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4));
+                            this.modules[nr][nc] = isBlack;
+                        } else {
+                            this.modules[nr][nc] = false;
+                        }
+                        this.isReserved[nr][nc] = true;
+                    }
+                }
+            }
+        }
+
+        placeAlignmentPatterns() {
+            const pos = ALIGNMENT_PATTERN_POS[this.version];
+            if (!pos || pos.length === 0) return;
+
+            for (let i = 0; i < pos.length; i++) {
+                for (let j = 0; j < pos.length; j++) {
+                    const row = pos[i];
+                    const col = pos[j];
+                    if (this.isReserved[row][col]) continue;
+
+                    for (let r = -2; r <= 2; r++) {
+                        for (let c = -2; c <= 2; c++) {
+                            const isBlack = (r === -2 || r === 2 || c === -2 || c === 2 || (r === 0 && c === 0));
+                            this.modules[row + r][col + c] = isBlack;
+                            this.isReserved[row + r][col + c] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        placeTimingPatterns() {
+            for (let i = 8; i < this.moduleCount - 8; i++) {
+                const val = (i % 2 === 0);
+                if (!this.isReserved[6][i]) {
+                    this.modules[6][i] = val;
+                    this.isReserved[6][i] = true;
+                }
+                if (!this.isReserved[i][6]) {
+                    this.modules[i][6] = val;
+                    this.isReserved[i][6] = true;
+                }
+            }
+        }
+
+        reserveFormatAndVersion() {
+            for (let i = 0; i < 9; i++) {
+                if (i !== 6) {
+                    this.isReserved[8][i] = true;
+                    this.isReserved[i][8] = true;
+                }
+            }
+            for (let i = this.moduleCount - 8; i < this.moduleCount; i++) {
+                this.isReserved[8][i] = true;
+                this.isReserved[i][8] = true;
+            }
+            this.modules[this.moduleCount - 8][8] = true;
+            this.isReserved[this.moduleCount - 8][8] = true;
+
+            if (this.version >= 7) {
+                for (let i = 0; i < 6; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        this.isReserved[i][this.moduleCount - 11 + j] = true;
+                        this.isReserved[this.moduleCount - 11 + j][i] = true;
+                    }
+                }
+            }
+        }
+
+        placeFormatInfo(maskPattern) {
+            const eccBits = ECC_LEVEL_MAP[this.eccLevel].formatBits;
+            const data = (eccBits << 3) | maskPattern;
+            const formatBCH = getBCHTypeInfo(data);
+
+            for (let i = 0; i < 15; i++) {
+                const bit = ((formatBCH >> i) & 1) === 1;
+
+                if (i < 6) this.modules[8][i] = bit;
+                else if (i < 8) this.modules[8][i + 1] = bit;
+                else if (i === 8) this.modules[7][8] = bit;
+                else this.modules[14 - i][8] = bit;
+
+                if (i < 8) this.modules[this.moduleCount - 1 - i][8] = bit;
+                else this.modules[8][this.moduleCount - 15 + i] = bit;
+            }
+        }
+
+        placeVersionInfo() {
+            if (this.version < 7) return;
+            const versionBCH = getBCHTypeNumber(this.version);
+            for (let i = 0; i < 18; i++) {
+                const bit = ((versionBCH >> i) & 1) === 1;
+                const r = Math.floor(i / 3);
+                const c = this.moduleCount - 11 + (i % 3);
+                this.modules[r][c] = bit;
+                this.modules[c][r] = bit;
+            }
+        }
+
+        mapData(codewords, maskPattern) {
+            const maskFn = MASK_FNS[maskPattern];
+            let byteIndex = 0;
+            let bitIndex = 7;
+            let upward = true;
+
+            for (let right = this.moduleCount - 1; right > 0; right -= 2) {
+                if (right === 6) right--;
+
+                const cols = [right, right - 1];
+                const rows = upward
+                    ? Array.from({ length: this.moduleCount }, (_, i) => this.moduleCount - 1 - i)
+                    : Array.from({ length: this.moduleCount }, (_, i) => i);
+
+                for (const row of rows) {
+                    for (const col of cols) {
+                        if (!this.isReserved[row][col]) {
+                            let bitVal = false;
+                            if (byteIndex < codewords.length) {
+                                bitVal = ((codewords[byteIndex] >> bitIndex) & 1) === 1;
+                                bitIndex--;
+                                if (bitIndex < 0) {
+                                    bitIndex = 7;
+                                    byteIndex++;
+                                }
+                            }
+                            if (maskFn(row, col)) {
+                                bitVal = !bitVal;
+                            }
+                            this.modules[row][col] = bitVal;
+                        }
+                    }
+                }
+                upward = !upward;
+            }
+        }
+
+        evaluatePenalty() {
+            let penalty = 0;
+            const size = this.moduleCount;
+
+            // N1
+            for (let r = 0; r < size; r++) {
+                let count = 1;
+                for (let c = 1; c < size; c++) {
+                    if (this.modules[r][c] === this.modules[r][c - 1]) {
+                        count++;
+                    } else {
+                        if (count >= 5) penalty += 3 + (count - 5);
+                        count = 1;
+                    }
+                }
+                if (count >= 5) penalty += 3 + (count - 5);
+            }
+
+            for (let c = 0; c < size; c++) {
+                let count = 1;
+                for (let r = 1; r < size; r++) {
+                    if (this.modules[r][c] === this.modules[r - 1][c]) {
+                        count++;
+                    } else {
+                        if (count >= 5) penalty += 3 + (count - 5);
+                        count = 1;
+                    }
+                }
+                if (count >= 5) penalty += 3 + (count - 5);
+            }
+
+            // N2
+            for (let r = 0; r < size - 1; r++) {
+                for (let c = 0; c < size - 1; c++) {
+                    const color = this.modules[r][c];
+                    if (color === this.modules[r][c + 1] &&
+                        color === this.modules[r + 1][c] &&
+                        color === this.modules[r + 1][c + 1]) {
+                        penalty += 3;
+                    }
+                }
+            }
+
+            // N3
+            const pattern = [true, false, true, true, true, false, true, false, false, false, false];
+            const patternRev = [false, false, false, false, true, false, true, true, true, false, true];
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c <= size - 11; c++) {
+                    let match1 = true, match2 = true;
+                    for (let k = 0; k < 11; k++) {
+                        if (this.modules[r][c + k] !== pattern[k]) match1 = false;
+                        if (this.modules[r][c + k] !== patternRev[k]) match2 = false;
+                    }
+                    if (match1 || match2) penalty += 40;
+                }
+            }
+
+            for (let c = 0; c < size; c++) {
+                for (let r = 0; r <= size - 11; r++) {
+                    let match1 = true, match2 = true;
+                    for (let k = 0; k < 11; k++) {
+                        if (this.modules[r + k][c] !== pattern[k]) match1 = false;
+                        if (this.modules[r + k][c] !== patternRev[k]) match2 = false;
+                    }
+                    if (match1 || match2) penalty += 40;
+                }
+            }
+
+            // N4
+            let darkCount = 0;
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (this.modules[r][c]) darkCount++;
+                }
+            }
+            const ratio = (darkCount / (size * size)) * 100;
+            const diff = Math.abs(ratio - 50);
+            penalty += Math.floor(diff / 5) * 10;
+
+            return penalty;
+        }
+    }
+
+    function generate(text, ecl) {
+        const eccLevel = ['L', 'M', 'Q', 'H'].includes(ecl) ? ecl : 'M';
+        const eccIndex = ECC_LEVEL_MAP[eccLevel].index;
+
+        const rawBytes = encodeUTF8(text);
+        const version = determineVersion(rawBytes.length, eccIndex);
+
+        const dataCW = createDataCodewords(rawBytes, version, eccIndex);
+        const interleavedCW = generateInterleavedCodewords(dataCW, version, eccIndex);
+
+        let lowestPenalty = Infinity;
+        let bestMatrix = null;
+
+        for (let mask = 0; mask < 8; mask++) {
+            const matrix = new QRCodeMatrix(version, eccLevel);
+            matrix.placeFinderPattern(0, 0);
+            matrix.placeFinderPattern(matrix.moduleCount - 7, 0);
+            matrix.placeFinderPattern(0, matrix.moduleCount - 7);
+            matrix.placeAlignmentPatterns();
+            matrix.placeTimingPatterns();
+            matrix.reserveFormatAndVersion();
+
+            matrix.placeFormatInfo(mask);
+            matrix.placeVersionInfo();
+            matrix.mapData(interleavedCW, mask);
+
+            const penalty = matrix.evaluatePenalty();
+            if (penalty < lowestPenalty) {
+                lowestPenalty = penalty;
+                bestMatrix = matrix;
+            }
+        }
+
+        return bestMatrix;
+    }
+
+    return { generate };
+})();
 
 export function init() {
     // Mode Buttons
@@ -184,6 +754,7 @@ export function init() {
     const downloadSvgBtn = document.getElementById('downloadSvgBtn');
 
     let currentMode = 'url';
+    let lastQRMatrix = null;
 
     function setMode(mode, btn, panel) {
         currentMode = mode;
@@ -258,323 +829,6 @@ export function init() {
         return 'Atelier Tools';
     }
 
-    // Full UTF-8 & Extended Capacity QR Matrix Engine
-    function generateQRMatrix(text, eccLevel) {
-        const qr = qrcodegenerator(0, eccLevel);
-        qr.addData(text);
-        qr.make();
-        return qr;
-    }
-
-    // --- Embedded Micro QRCode Generator Library (UTF-8 Supported) ---
-    function qrcodegenerator(typeNumber, errorCorrectionLevel) {
-        const PAD0 = 0xEC;
-        const PAD1 = 0x11;
-
-        let _modules = null;
-        let _moduleCount = 0;
-        let _dataList = [];
-
-        const qr = {
-            addData: function(data) {
-                _dataList.push({ data: data });
-            },
-            isDark: function(row, col) {
-                if (row < 0 || _moduleCount <= row || col < 0 || _moduleCount <= col) {
-                    throw new Error(row + "," + col);
-                }
-                return _modules[row][col];
-            },
-            getModuleCount: function() {
-                return _moduleCount;
-            },
-            make: function() {
-                if (typeNumber < 1) {
-                    const encoder = new TextEncoder();
-                    for (typeNumber = 1; typeNumber < 40; typeNumber++) {
-                        const rsBlocks = getRSBlocks(typeNumber, errorCorrectionLevel);
-                        const buffer = createBuffer();
-                        for (let i = 0; i < _dataList.length; i++) {
-                            const bytes = encoder.encode(_dataList[i].data);
-                            buffer.put(4, 4); // 8-bit byte mode
-                            buffer.put(bytes.length, getLengthInBits(4, typeNumber));
-                            for (let j = 0; j < bytes.length; j++) {
-                                buffer.put(bytes[j], 8);
-                            }
-                        }
-                        let totalDataCount = 0;
-                        for (let i = 0; i < rsBlocks.length; i++) {
-                            totalDataCount += rsBlocks[i].dataCount;
-                        }
-                        if (buffer.getLengthInBits() <= totalDataCount * 8) break;
-                    }
-                }
-                makeImpl(false, getBestMaskPattern());
-            }
-        };
-
-        function getLengthInBits(mode, type) {
-            if (1 <= type && type < 10) return 8;
-            else if (type < 27) return 16;
-            else return 16;
-        }
-
-        function createBuffer() {
-            const buffer = [];
-            let length = 0;
-            return {
-                getBuffer: function() { return buffer; },
-                getLengthInBits: function() { return length; },
-                put: function(num, len) {
-                    for (let i = 0; i < len; i++) {
-                        this.putBit(((num >>> (len - i - 1)) & 1) === 1);
-                    }
-                },
-                putBit: function(bit) {
-                    const bufIndex = Math.floor(length / 8);
-                    if (buffer.length <= bufIndex) buffer.push(0);
-                    if (bit) buffer[bufIndex] |= (0x80 >>> (length % 8));
-                    length++;
-                }
-            };
-        }
-
-        function makeImpl(test, maskPattern) {
-            _moduleCount = typeNumber * 4 + 17;
-            _modules = new Array(_moduleCount);
-            for (let row = 0; row < _moduleCount; row++) {
-                _modules[row] = new Array(_moduleCount);
-                for (let col = 0; col < _moduleCount; col++) {
-                    _modules[row][col] = null;
-                }
-            }
-            setupPositionProbePattern(0, 0);
-            setupPositionProbePattern(_moduleCount - 7, 0);
-            setupPositionProbePattern(0, _moduleCount - 7);
-            setupPositionAdjustPattern();
-            setupTimingPattern();
-            setupTypeInfo(test, maskPattern);
-            if (typeNumber >= 7) setupTypeNumber(test);
-            mapData(createData(typeNumber, errorCorrectionLevel, _dataList), maskPattern);
-        }
-
-        function setupPositionProbePattern(row, col) {
-            for (let r = -1; r <= 7; r++) {
-                if (row + r <= -1 || _moduleCount <= row + r) continue;
-                for (let c = -1; c <= 7; c++) {
-                    if (col + c <= -1 || _moduleCount <= col + c) continue;
-                    if ((0 <= r && r <= 6 && (c === 0 || c === 6)) ||
-                        (0 <= c && c <= 6 && (r === 0 || r === 6)) ||
-                        (2 <= r && r <= 4 && 2 <= c && c <= 4)) {
-                        _modules[row + r][col + c] = true;
-                    } else {
-                        _modules[row + r][col + c] = false;
-                    }
-                }
-            }
-        }
-
-        function setupPositionAdjustPattern() {
-            const pos = getPatternPosition(typeNumber);
-            for (let i = 0; i < pos.length; i++) {
-                for (let j = 0; j < pos.length; j++) {
-                    const row = pos[i];
-                    const col = pos[j];
-                    if (_modules[row][col] !== null) continue;
-                    for (let r = -2; r <= 2; r++) {
-                        for (let c = -2; c <= 2; c++) {
-                            if (r === -2 || r === 2 || c === -2 || c === 2 || (r === 0 && c === 0)) {
-                                _modules[row + r][col + c] = true;
-                            } else {
-                                _modules[row + r][col + c] = false;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        function setupTimingPattern() {
-            for (let r = 8; r < _moduleCount - 8; r++) {
-                if (_modules[r][6] === null) _modules[r][6] = (r % 2 === 0);
-            }
-            for (let c = 8; c < _moduleCount - 8; c++) {
-                if (_modules[6][c] === null) _modules[6][c] = (c % 2 === 0);
-            }
-        }
-
-        function setupTypeInfo(test, maskPattern) {
-            const data = (getECLBits(errorCorrectionLevel) << 3) | maskPattern;
-            const bits = getBCHTypeInfo(data);
-            for (let i = 0; i < 15; i++) {
-                const mod = (!test && ((bits >> i) & 1) === 1);
-                if (i < 6) _modules[i][8] = mod;
-                else if (i < 8) _modules[i + 1][8] = mod;
-                else _modules[_moduleCount - 15 + i][8] = mod;
-            }
-            for (let i = 0; i < 15; i++) {
-                const mod = (!test && ((bits >> i) & 1) === 1);
-                if (i < 8) _modules[8][_moduleCount - i - 1] = mod;
-                else if (i < 9) _modules[8][15 - i - 1 + 1] = mod;
-                else _modules[8][15 - i - 1] = mod;
-            }
-            _modules[_moduleCount - 8][8] = !test;
-        }
-
-        function setupTypeNumber(test) {
-            const bits = getBCHTypeNumber(typeNumber);
-            for (let i = 0; i < 18; i++) {
-                const mod = (!test && ((bits >> i) & 1) === 1);
-                _modules[Math.floor(i / 3)][i % 3 + _moduleCount - 8 - 3] = mod;
-                _modules[i % 3 + _moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
-            }
-        }
-
-        function mapData(data, maskPattern) {
-            let inc = -1;
-            let row = _moduleCount - 1;
-            let bitIndex = 7;
-            let byteIndex = 0;
-            const mask = getMask(maskPattern);
-
-            for (let col = _moduleCount - 1; col > 0; col -= 2) {
-                if (col === 6) col--;
-                while (true) {
-                    for (let c = 0; c < 2; c++) {
-                        if (_modules[row][col - c] === null) {
-                            let dark = false;
-                            if (byteIndex < data.length) {
-                                dark = (((data[byteIndex] >>> bitIndex) & 1) === 1);
-                            }
-                            if (mask(row, col - c)) dark = !dark;
-                            _modules[row][col - c] = dark;
-                            bitIndex--;
-                            if (bitIndex === -1) {
-                                byteIndex++;
-                                bitIndex = 7;
-                            }
-                        }
-                    }
-                    row += inc;
-                    if (row < 0 || _moduleCount <= row) {
-                        row -= inc;
-                        inc = -inc;
-                        break;
-                    }
-                }
-            }
-        }
-
-        function getBestMaskPattern() {
-            return 0;
-        }
-
-        function getMask(maskPattern) {
-            return function(i, j) {
-                return (i + j) % 2 === 0;
-            };
-        }
-
-        function getECLBits(ecl) {
-            switch(ecl) {
-                case 'L': return 1;
-                case 'M': return 0;
-                case 'Q': return 3;
-                case 'H': return 2;
-                default: return 0;
-            }
-        }
-
-        function getBCHTypeInfo(data) {
-            let d = data << 10;
-            while (getBCHDigit(d) - getBCHDigit(1335) >= 0) {
-                d ^= (1335 << (getBCHDigit(d) - getBCHDigit(1335)));
-            }
-            return ((data << 10) | d) ^ 21522;
-        }
-
-        function getBCHTypeNumber(data) {
-            let d = data << 12;
-            while (getBCHDigit(d) - getBCHDigit(7973) >= 0) {
-                d ^= (7973 << (getBCHDigit(d) - getBCHDigit(7973)));
-            }
-            return (data << 12) | d;
-        }
-
-        function getBCHDigit(data) {
-            let digit = 0;
-            while (data !== 0) {
-                digit++;
-                data >>>= 1;
-            }
-            return digit;
-        }
-
-        function getPatternPosition(type) {
-            if (type === 1) return [];
-            if (type === 2) return [6, 18];
-            if (type === 3) return [6, 22];
-            if (type === 4) return [6, 26];
-            if (type === 5) return [6, 30];
-            if (type === 6) return [6, 34];
-            if (type === 7) return [6, 22, 38];
-            return [6, 26, 42];
-        }
-
-        function getRSBlocks(type, ecl) {
-            // Extended capacity table lookup for robust QR generation
-            const table = [
-                [1, 26, 19], [1, 26, 16], [1, 26, 13], [1, 26, 9],
-                [1, 44, 34], [1, 44, 28], [1, 44, 22], [1, 44, 16],
-                [1, 70, 55], [1, 70, 44], [2, 35, 17], [2, 35, 13],
-                [1, 100, 80], [2, 50, 32], [2, 50, 24], [4, 25, 9],
-                [1, 134, 108], [2, 67, 43], [2, 33, 15], [2, 34, 16],
-                [1, 172, 136], [2, 86, 62], [4, 43, 28], [4, 43, 26],
-                [1, 196, 156], [2, 98, 76], [2, 48, 36], [4, 48, 22],
-                [1, 242, 194], [2, 121, 94], [2, 60, 43], [4, 60, 27],
-                [1, 292, 220], [3, 97, 70], [4, 48, 32], [4, 48, 26],
-                [1, 332, 250], [3, 110, 84], [4, 55, 36], [4, 55, 28]
-            ];
-            const offset = (type - 1) * 4 + getECLBits(ecl);
-            const entry = table[Math.min(offset, table.length - 1)] || [1, 100, 80];
-            return [{ totalCount: entry[1], dataCount: entry[2] }];
-        }
-
-        function createData(type, ecl, dataList) {
-            const rsBlocks = getRSBlocks(type, ecl);
-            const buffer = createBuffer();
-            const encoder = new TextEncoder();
-            for (let i = 0; i < dataList.length; i++) {
-                const bytes = encoder.encode(dataList[i].data);
-                buffer.put(4, 4);
-                buffer.put(bytes.length, getLengthInBits(4, type));
-                for (let j = 0; j < bytes.length; j++) {
-                    buffer.put(bytes[j], 8);
-                }
-            }
-            let totalDataCount = 0;
-            for (let i = 0; i < rsBlocks.length; i++) {
-                totalDataCount += rsBlocks[i].dataCount;
-            }
-            if (buffer.getLengthInBits() > totalDataCount * 8) {
-                throw new Error("Text is too long for QR Code capacity");
-            }
-            if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) buffer.put(0, 4);
-            while (buffer.getLengthInBits() % 8 !== 0) buffer.putBit(false);
-            while (true) {
-                if (buffer.getLengthInBits() >= totalDataCount * 8) break;
-                buffer.put(PAD0, 8);
-                if (buffer.getLengthInBits() >= totalDataCount * 8) break;
-                buffer.put(PAD1, 8);
-            }
-            return buffer.getBuffer();
-        }
-
-        return qr;
-    }
-
-    let lastQRMatrix = null;
-
     function updateQRCode() {
         const payload = getPayload();
         const ecl = qrErrorCorrection.value;
@@ -582,7 +836,7 @@ export function init() {
         const bg = qrBgColor.value;
 
         try {
-            const qr = generateQRMatrix(payload, ecl);
+            const qr = QR_ENGINE.generate(payload, ecl);
             lastQRMatrix = qr;
             const count = qr.getModuleCount();
 
@@ -609,7 +863,7 @@ export function init() {
                 }
             }
         } catch (err) {
-            console.error(err);
+            console.error('QR Generator Error:', err);
         }
     }
 
@@ -650,9 +904,7 @@ export function init() {
         link.download = `qrcode_${Date.now()}.png`;
         link.href = exportCanvas.toDataURL('image/png');
         link.click();
-        if (window.Atelier && window.Atelier.showToast) {
-            window.Atelier.showToast('Downloaded High-Res PNG!', 'success');
-        }
+        window.Atelier.showToast('Downloaded High-Res PNG!', 'success');
     });
 
     // Copy Image
@@ -663,16 +915,12 @@ export function init() {
                     navigator.clipboard.write([
                         new ClipboardItem({ 'image/png': blob })
                     ]).then(() => {
-                        if (window.Atelier && window.Atelier.showToast) {
-                            window.Atelier.showToast('Copied QR image to clipboard!', 'success');
-                        }
+                        window.Atelier.showToast('Copied QR image to clipboard!', 'success');
                     });
                 }
             });
         } catch {
-            if (window.Atelier && window.Atelier.showToast) {
-                window.Atelier.showToast('Direct clipboard image copy not supported in this browser', 'info');
-            }
+            window.Atelier.showToast('Direct clipboard image copy not supported in this browser', 'info');
         }
     });
 
@@ -704,9 +952,7 @@ export function init() {
         link.download = `qrcode_${Date.now()}.svg`;
         link.href = URL.createObjectURL(blob);
         link.click();
-        if (window.Atelier && window.Atelier.showToast) {
-            window.Atelier.showToast('Downloaded Scalable SVG!', 'success');
-        }
+        window.Atelier.showToast('Downloaded Scalable SVG!', 'success');
     });
 
     // Listen to changes
