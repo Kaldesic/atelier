@@ -1,4 +1,4 @@
-const CACHE_NAME = 'atelier-v14';
+const CACHE_NAME = 'atelier-v15';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -24,7 +24,9 @@ const ASSETS_TO_CACHE = [
   './js/tools/json-formatter.js',
   './js/tools/url-encoder.js',
   './js/tools/color-converter.js',
-  './js/tools/html-entity-encoder.js'
+  './js/tools/html-entity-encoder.js',
+  './js/tools/box-shadow-generator.js',
+  './js/tools/markdown-previewer.js'
 ];
 
 // 1. Instalacija - keširanje osnovnih resursa i skripti
