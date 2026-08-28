@@ -112,25 +112,31 @@ function renderToolCard(tool, isPinned) {
     `;
 }
 
+let activeCategoryFilter = 'ALL';
+
 function renderGrid(searchQuery = '') {
     const basePath = '#/';
     const favorites = getFavorites();
     
     const lowerQuery = searchQuery.toLowerCase();
-    const filteredTools = TOOLS_REGISTRY.filter(t => 
+    let filteredTools = TOOLS_REGISTRY.filter(t => 
         t.title.toLowerCase().includes(lowerQuery) || 
         t.description.toLowerCase().includes(lowerQuery)
     );
 
+    if (activeCategoryFilter !== 'ALL') {
+        filteredTools = filteredTools.filter(t => t.category === activeCategoryFilter);
+    }
+
     if (filteredTools.length === 0) {
-        appRoot.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin-top: 3rem;">No tools found matching "${searchQuery}"</p>`;
+        appRoot.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin-top: 3rem;">No tools found matching your search or category filter.</p>`;
         return;
     }
 
     let html = '';
 
-    // If there are pinned tools and no search filter, show pinned shelf at top
-    if (favorites.length > 0 && !searchQuery) {
+    // If there are pinned tools, no search filter and ALL category, show pinned shelf at top
+    if (favorites.length > 0 && !searchQuery && activeCategoryFilter === 'ALL') {
         const pinnedTools = TOOLS_REGISTRY.filter(t => favorites.includes(t.id));
         if (pinnedTools.length > 0) {
             html += `
@@ -181,6 +187,16 @@ if (searchInput) {
     searchInput.addEventListener('input', (e) => renderGrid(e.target.value));
 }
 
+// Category filter button clicks
+document.querySelectorAll('.cat-filter-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.cat-filter-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        activeCategoryFilter = e.currentTarget.getAttribute('data-category');
+        renderGrid(searchInput ? searchInput.value : '');
+    });
+});
+
 
 // Hash-based SPA routing
 window.addEventListener('hashchange', route);
@@ -189,7 +205,28 @@ document.addEventListener('DOMContentLoaded', route);
 
 
 
-// Register Service Worker
+// Register Service Worker & PWA Install Prompt
+let deferredPrompt = null;
+const pwaBanner = document.getElementById('pwa-install-banner');
+const pwaInstallBtn = document.getElementById('pwa-install-btn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (pwaBanner) pwaBanner.classList.add('show');
+});
+
+if (pwaInstallBtn) {
+    pwaInstallBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            if (pwaBanner) pwaBanner.classList.remove('show');
+        }
+    });
+}
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
@@ -197,6 +234,54 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.error('ServiceWorker registration failed: ', err));
     });
 }
+
+// --- Global Drag and Drop Router ---
+const globalDropzone = document.getElementById('global-dropzone');
+let dragCounter = 0;
+
+window.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    if (globalDropzone && dragCounter === 1) {
+        globalDropzone.classList.add('active');
+    }
+});
+
+window.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dragCounter--;
+    if (globalDropzone && dragCounter <= 0) {
+        dragCounter = 0;
+        globalDropzone.classList.remove('active');
+    }
+});
+
+window.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    if (globalDropzone) globalDropzone.classList.remove('active');
+
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    const name = file.name.toLowerCase();
+
+    // Smart route based on dropped file type
+    if (name.endsWith('.svg')) {
+        window.location.hash = '#/svg-cleaner';
+    } else if (name.endsWith('.json')) {
+        window.location.hash = '#/json-formatter';
+    } else if (name.endsWith('.md') || name.endsWith('.markdown')) {
+        window.location.hash = '#/markdown-previewer';
+    } else if (file.type.startsWith('image/')) {
+        window.location.hash = '#/image-compressor';
+    }
+});
 
 // --- Theme Management ---
 const SUN_ICON = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
