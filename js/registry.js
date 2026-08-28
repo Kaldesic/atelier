@@ -91,5 +91,19 @@ export const TOOLS_REGISTRY = [
     description: 'Encode, decode URLs, and parse complex query parameters.',
     path: 'url-encoder',
     category: 'Developer Utilities'
+  },
+  {
+    id: 'color-converter',
+    title: 'Color & Contrast Matrix',
+    description: 'Convert HEX, RGB, HSL values and test WCAG accessibility contrast ratios.',
+    path: 'color-converter',
+    category: 'Typography & Layout'
+  },
+  {
+    id: 'html-entity-encoder',
+    title: 'HTML Entity Encoder',
+    description: 'Escape, unescape, and sanitize HTML entities and special characters.',
+    path: 'html-entity-encoder',
+    category: 'Developer Utilities'
   }
 ];
