@@ -97,7 +97,7 @@ function renderGrid(searchQuery = '') {
     let html = '<div class="categories-container">';
     for (const [category, tools] of Object.entries(grouped)) {
         html += `
-            <section class="category-block">
+            <div class="category-group">
                 <h2 class="category-title">${category}</h2>
                 <div class="tools-grid">
                     ${tools.map(tool => `
@@ -110,7 +110,7 @@ function renderGrid(searchQuery = '') {
                         </a>
                     `).join('')}
                 </div>
-            </section>
+            </div>
         `;
     }
     html += '</div>';
@@ -138,3 +138,65 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.error('ServiceWorker registration failed: ', err));
     });
 }
+
+// --- Theme Management ---
+const SUN_ICON = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+const MOON_ICON = `<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+
+function updateThemeIcons(theme) {
+    const icon = theme === 'dark' ? SUN_ICON : MOON_ICON;
+    const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    const btns = [document.getElementById('theme-toggle-home'), document.getElementById('theme-toggle-tool')];
+    btns.forEach(btn => {
+        if (btn) {
+            btn.innerHTML = icon;
+            btn.setAttribute('title', label);
+            btn.setAttribute('aria-label', label);
+        }
+    });
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    localStorage.setItem('atelier-theme', nextTheme);
+    updateThemeIcons(nextTheme);
+}
+
+document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', toggleTheme);
+});
+
+// Sync initial icon state
+const initialTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+updateThemeIcons(initialTheme);
+
+// --- Global Keyboard Shortcuts ---
+window.addEventListener('keydown', (e) => {
+    const isSearchFocused = document.activeElement === searchInput;
+    const isInsideInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
+
+    // Ctrl+K, Cmd+K, or '/' to focus search on home view
+    if (((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') || (e.key === '/' && !isInsideInput)) {
+        const hash = window.location.hash.replace('#', '');
+        const isHome = !hash || hash === '/';
+        if (isHome && searchInput) {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+    }
+
+    // Escape: clear search or return back to home
+    if (e.key === 'Escape') {
+        if (isSearchFocused && searchInput.value) {
+            searchInput.value = '';
+            renderGrid('');
+            searchInput.blur();
+        } else if (window.location.hash && window.location.hash !== '#/' && window.location.hash !== '#') {
+            window.location.hash = '#/';
+        }
+    }
+});
+
