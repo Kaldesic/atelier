@@ -131,32 +131,11 @@ p.subtitle {
   border-radius: 50%;
 }
 
-/* Dynamic Grid / Cards - Desktop 4-Column Responsive Layout */
+/* Dynamic Grid / Cards Layout */
 .tools-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
-}
-
-@media (min-width: 640px) {
-  .tools-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.85rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .tools-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.9rem;
-  }
-}
-
-@media (min-width: 1360px) {
-  .tools-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-  }
 }
 
 .tool-card {
@@ -781,8 +760,8 @@ footer a:hover {
 
 /* Multi-column Categories Layout */
 .categories-container {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
 }
 
@@ -807,6 +786,28 @@ footer a:hover {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* Responsive grid layout for category groups */
+@media (min-width: 768px) {
+  .categories-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .categories-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .categories-container {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
 }
 
 /* Tool card pinned button */
@@ -1002,16 +1003,3 @@ footer a:hover {
     grid-template-columns: 1fr !important;
   }
 }
-
-@media (min-width: 768px) {
-  .container {
-    max-width: 800px;
-  }
-  
-  .categories-container {
-    display: block; /* Override flex */
-    column-count: 2;
-    column-gap: 1.5rem;
-  }
-}
-
