@@ -31,9 +31,18 @@
         })();
     </script>
 
-    <link rel="stylesheet" href="css/main.css?v=15">
+    <link rel="stylesheet" href="css/main.css?v=16">
 </head>
 <body>
+    <!-- Global File Drag and Drop Overlay -->
+    <div id="global-dropzone">
+        <div class="dropzone-box">
+            <div class="dropzone-icon">📥</div>
+            <div class="dropzone-title">Drop File to Launch Tool</div>
+            <div class="dropzone-desc">Drop images, SVGs, or data files anywhere to open the optimal Atelier tool</div>
+        </div>
+    </div>
+
     <div class="container">
         <nav class="nav-back nav-bar" id="nav-back" style="display: none;">
             <a href="#" data-link>← Back to Atelier</a>
@@ -53,12 +62,33 @@
                 <span class="privacy-dot"></span>
                 100% Private & Client-Side Execution • Zero Telemetry
             </div>
+
+            <!-- Optional PWA Install Banner -->
+            <div id="pwa-install-banner" class="pwa-install-banner">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <span style="font-size: 1.25rem;">✨</span>
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text);">Install Atelier App</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Access all 21 tools offline with instant desktop/mobile launch.</div>
+                    </div>
+                </div>
+                <button id="pwa-install-btn" class="btn btn-primary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem; white-space: nowrap;">Install</button>
+            </div>
         
             <div class="search-container">
                 <div class="search-wrapper">
-                    <input type="text" id="tool-search" class="search-input" placeholder="Search tools (press '/' or 'Ctrl+K')...">
+                    <input type="text" id="tool-search" class="search-input" placeholder="Search 21 tools (press '/' or 'Ctrl+K')...">
                     <span class="search-kbd">/</span>
                 </div>
+            </div>
+
+            <!-- Category Filter Bar -->
+            <div class="category-filter-bar" id="categoryFilterBar">
+                <button class="cat-filter-btn active" data-category="ALL">All Tools (21)</button>
+                <button class="cat-filter-btn" data-category="Image & Asset Processing">Images & Assets</button>
+                <button class="cat-filter-btn" data-category="Vector & Graphics">Vectors</button>
+                <button class="cat-filter-btn" data-category="Typography & Layout">Typography & Design</button>
+                <button class="cat-filter-btn" data-category="Developer Utilities">Developer Utilities</button>
             </div>
         </header>
 
