@@ -12,11 +12,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atelier — Minimalist Web Utilities</title>
     
-    <meta name="description" content="A curated digital workshop for minimalist web tools and utilities.">
+    <meta name="description" content="A curated digital workshop for minimalist web tools, daily utilities, and design engineering. 100% client-side execution.">
     <meta name="theme-color" content="#0f1115">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="favicon.png" type="image/svg+xml">
     
+    <!-- Canonical & SEO Social Standards -->
+    <link rel="canonical" href="https://kaldesic.github.io/atelier/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Atelier — Minimalist Web Utilities">
+    <meta property="og:description" content="A curated digital workshop for minimalist web tools and utilities operating 100% locally.">
+    <meta property="og:url" content="https://kaldesic.github.io/atelier/">
+    <meta property="og:image" content="https://kaldesic.github.io/atelier/favicon.png">
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Atelier — Minimalist Web Utilities">
+    <meta name="twitter:description" content="A curated digital workshop for minimalist web tools operating 100% locally.">
+    <meta name="twitter:image" content="https://kaldesic.github.io/atelier/favicon.png">
+
+    <!-- PWA & Favicon -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="favicon.png">
+    
+    <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self';">
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
@@ -31,7 +48,7 @@
         })();
     </script>
 
-    <link rel="stylesheet" href="css/main.css?v=18">
+    <link rel="stylesheet" href="css/main.css?v=20">
 </head>
 <body>
     <!-- Global File Drag and Drop Overlay -->
@@ -103,7 +120,8 @@
         <p>Built with precision for web developers & designers.</p>
     </footer>
 
-    <script src="/atelier/js/core.js"></script>
-    <script type="module" src="/atelier/js/app.js"></script>
+    <!-- Use relative scripts so base tag handles root vs sub-paths correctly -->
+    <script src="js/core.js"></script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
