@@ -40,7 +40,7 @@ Atelier was rebuilt from the ground up with a focus on maximum performance and p
 
 ## 🧰 Full Tool Suite
 
-Atelier includes **28 tools** organized into **5 thematic domains**.
+Atelier includes **29 tools** organized into **5 thematic domains**.
 
 ### 🖼️ 1. Image & Media Studio
 - **Batch Image & File Processor** — bulk convert, resize, rename, and package images into a ZIP file.
