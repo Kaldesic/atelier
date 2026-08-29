@@ -191,10 +191,14 @@ const QR_ENGINE = (() => {
     }
 
     const ALIGNMENT_PATTERN_POS = [
-        [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34], [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50],
+        [],
+        [6, 18], [6, 22], [6, 26], [6, 30], [6, 34], [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50],
         [6, 30, 54], [6, 32, 58], [6, 34, 62], [6, 26, 46, 66], [6, 26, 48, 70], [6, 26, 50, 74], [6, 30, 54, 78], [6, 30, 56, 82], [6, 30, 58, 86], [6, 34, 62, 90],
-        [6, 28, 50, 72, 94], [6, 26, 50, 74, 98], [6, 30, 54, 78, 102], [6, 28, 54, 80, 106], [6, 32, 58, 84, 110], [6, 30, 58, 86, 114], [6, 34, 62, 90, 118], [6, 26, 50, 74, 98, 122], [6, 30, 54, 78, 102, 126], [6, 26, 52, 78, 104, 130],
-        [6, 30, 56, 82, 108, 134], [6, 34, 60, 86, 112, 138], [6, 30, 54, 78, 102, 126, 150], [6, 24, 50, 76, 102, 128, 154], [6, 28, 54, 80, 106, 132, 158], [6, 32, 58, 84, 110, 136, 162], [6, 26, 54, 82, 110, 138, 166], [6, 30, 58, 86, 114, 142, 170], [6, 34, 62, 90, 118, 146, 174], [6, 30, 58, 86, 114, 142, 170]
+        [6, 28, 50, 72, 94], [6, 26, 50, 74, 98], [6, 30, 54, 78, 102], [6, 28, 54, 80, 106], [6, 32, 58, 84, 110], [6, 30, 58, 86, 114], [6, 34, 62, 90, 118],
+        [6, 26, 50, 74, 98, 122], [6, 30, 54, 78, 102, 126], [6, 26, 52, 78, 104, 130], [6, 30, 56, 82, 108, 134],
+        [6, 34, 60, 86, 112, 138], [6, 30, 58, 86, 114, 142], [6, 34, 62, 90, 118, 146],
+        [6, 30, 54, 78, 102, 126, 150], [6, 24, 50, 76, 102, 128, 154], [6, 28, 54, 80, 106, 132, 158],
+        [6, 32, 58, 84, 110, 136, 162], [6, 26, 54, 82, 110, 138, 166], [6, 30, 58, 86, 114, 142, 170]
     ];
 
     const VERSION_SPECS = [
@@ -484,16 +488,31 @@ const QR_ENGINE = (() => {
             const eccBits = ECC_LEVEL_MAP[this.eccLevel].formatBits;
             const formatBCH = getBCHTypeInfo((eccBits << 3) | maskPattern);
 
+            // Copy 1: around the top-left finder pattern.
+            // The format bits are written vertically and horizontally in
+            // the exact locations required by the QR Code specification.
             for (let i = 0; i < 15; i++) {
                 const bit = ((formatBCH >> i) & 1) === 1;
-                if (i < 6) this.modules[8][i] = bit;
-                else if (i < 8) this.modules[8][i + 1] = bit;
-                else if (i === 8) this.modules[7][8] = bit;
-                else this.modules[14 - i][8] = bit;
 
-                if (i < 8) this.modules[this.moduleCount - 1 - i][8] = bit;
-                else this.modules[8][this.moduleCount - 15 + i] = bit;
+                if (i < 6) {
+                    this.modules[i][8] = bit;
+                } else if (i < 8) {
+                    this.modules[i + 1][8] = bit;
+                } else {
+                    this.modules[this.moduleCount - 15 + i][8] = bit;
+                }
+
+                if (i < 8) {
+                    this.modules[8][this.moduleCount - i - 1] = bit;
+                } else if (i < 9) {
+                    this.modules[8][7] = bit;
+                } else {
+                    this.modules[8][15 - i - 1] = bit;
+                }
             }
+
+            // Fixed dark module.
+            this.modules[this.moduleCount - 8][8] = true;
         }
 
         placeVersionInfo() {
@@ -579,6 +598,69 @@ const QR_ENGINE = (() => {
                 }
             }
 
+            // Rule 3: finder-like 1:1:3:1:1 pattern in rows/columns.
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c <= size - 11; c++) {
+                    if (this.modules[r][c] &&
+                        !this.modules[r][c + 1] &&
+                        this.modules[r][c + 2] &&
+                        this.modules[r][c + 3] &&
+                        this.modules[r][c + 4] &&
+                        !this.modules[r][c + 5] &&
+                        this.modules[r][c + 6] &&
+                        !this.modules[r][c + 7] &&
+                        !this.modules[r][c + 8] &&
+                        !this.modules[r][c + 9] &&
+                        !this.modules[r][c + 10]) {
+                        penalty += 40;
+                    }
+                    if (!this.modules[r][c] &&
+                        !this.modules[r][c + 1] &&
+                        !this.modules[r][c + 2] &&
+                        !this.modules[r][c + 3] &&
+                        this.modules[r][c + 4] &&
+                        !this.modules[r][c + 5] &&
+                        this.modules[r][c + 6] &&
+                        this.modules[r][c + 7] &&
+                        this.modules[r][c + 8] &&
+                        !this.modules[r][c + 9] &&
+                        this.modules[r][c + 10]) {
+                        penalty += 40;
+                    }
+                }
+            }
+
+            for (let c = 0; c < size; c++) {
+                for (let r = 0; r <= size - 11; r++) {
+                    if (this.modules[r][c] &&
+                        !this.modules[r + 1][c] &&
+                        this.modules[r + 2][c] &&
+                        this.modules[r + 3][c] &&
+                        this.modules[r + 4][c] &&
+                        !this.modules[r + 5][c] &&
+                        this.modules[r + 6][c] &&
+                        !this.modules[r + 7][c] &&
+                        !this.modules[r + 8][c] &&
+                        !this.modules[r + 9][c] &&
+                        !this.modules[r + 10][c]) {
+                        penalty += 40;
+                    }
+                    if (!this.modules[r][c] &&
+                        !this.modules[r + 1][c] &&
+                        !this.modules[r + 2][c] &&
+                        !this.modules[r + 3][c] &&
+                        this.modules[r + 4][c] &&
+                        !this.modules[r + 5][c] &&
+                        this.modules[r + 6][c] &&
+                        this.modules[r + 7][c] &&
+                        this.modules[r + 8][c] &&
+                        !this.modules[r + 9][c] &&
+                        this.modules[r + 10][c]) {
+                        penalty += 40;
+                    }
+                }
+            }
+
             let darkCount = 0;
             for (let r = 0; r < size; r++) {
                 for (let c = 0; c < size; c++) {
@@ -596,8 +678,21 @@ const QR_ENGINE = (() => {
         const eccLevel = ['L', 'M', 'Q', 'H'].includes(ecl) ? ecl : 'M';
         const eccIndex = ECC_LEVEL_MAP[eccLevel].index;
 
-        const rawBytes = encodeUTF8(text);
+        const rawBytes = encodeUTF8(String(text ?? ''));
         const version = determineVersion(rawBytes.length, eccIndex);
+
+        // Version 40 still has a finite capacity. Give the UI a useful
+        // error instead of failing later with a cryptic bit-buffer error.
+        const maxDataCW = (() => {
+            const spec = VERSION_SPECS[version][eccIndex];
+            return (spec[2] * spec[3]) + (spec[4] * spec[5]);
+        })();
+
+        const lengthBits = version < 10 ? 8 : 16;
+        const requiredBits = 4 + lengthBits + (rawBytes.length * 8);
+        if (requiredBits > maxDataCW * 8) {
+            throw new Error('The input is too long for a QR Code at error correction level ' + eccLevel + '.');
+        }
 
         const dataCW = createDataCodewords(rawBytes, version, eccIndex);
         const interleavedCW = generateInterleavedCodewords(dataCW, version, eccIndex);
@@ -758,11 +853,18 @@ export function init() {
             const count = qr.getModuleCount();
 
             const canvas = qrCanvas;
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { alpha: false });
             const size = canvas.width;
-            const margin = 16;
-            const cellSize = (size - margin * 2) / count;
 
+            // Render at an integer number of pixels per QR module to keep
+            // every edge razor-sharp and scanner-friendly.
+            const quietModules = 4;
+            const cells = count + quietModules * 2;
+            const cellSize = Math.max(1, Math.floor(size / cells));
+            const renderedSize = cellSize * cells;
+            const offset = Math.floor((size - renderedSize) / 2);
+
+            ctx.imageSmoothingEnabled = false;
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, size, size);
 
@@ -771,16 +873,28 @@ export function init() {
                 for (let c = 0; c < count; c++) {
                     if (qr.isDark(r, c)) {
                         ctx.fillRect(
-                            Math.floor(margin + c * cellSize),
-                            Math.floor(margin + r * cellSize),
-                            Math.ceil(cellSize),
-                            Math.ceil(cellSize)
+                            offset + (c + quietModules) * cellSize,
+                            offset + (r + quietModules) * cellSize,
+                            cellSize,
+                            cellSize
                         );
                     }
                 }
             }
         } catch (err) {
             console.error('QR Generator Error:', err);
+            lastQRMatrix = null;
+            const ctx = qrCanvas.getContext('2d');
+            ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+            ctx.fillStyle = qrBgColor.value;
+            ctx.fillRect(0, 0, qrCanvas.width, qrCanvas.height);
+
+            if (window.Atelier && window.Atelier.showToast) {
+                window.Atelier.showToast(
+                    err instanceof Error ? err.message : 'Could not generate QR code.',
+                    'error'
+                );
+            }
         }
     }
 
@@ -796,9 +910,13 @@ export function init() {
         const ctx = exportCanvas.getContext('2d');
 
         const count = lastQRMatrix.getModuleCount();
-        const margin = Math.floor(resolution * 0.08);
-        const cellSize = (resolution - margin * 2) / count;
+        const quietModules = 4;
+        const cells = count + quietModules * 2;
+        const cellSize = Math.max(1, Math.floor(resolution / cells));
+        const renderedSize = cellSize * cells;
+        const offset = Math.floor((resolution - renderedSize) / 2);
 
+        ctx.imageSmoothingEnabled = false;
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, resolution, resolution);
 
@@ -807,10 +925,10 @@ export function init() {
             for (let c = 0; c < count; c++) {
                 if (lastQRMatrix.isDark(r, c)) {
                     ctx.fillRect(
-                        Math.floor(margin + c * cellSize),
-                        Math.floor(margin + r * cellSize),
-                        Math.ceil(cellSize),
-                        Math.ceil(cellSize)
+                        offset + (c + quietModules) * cellSize,
+                        offset + (r + quietModules) * cellSize,
+                        cellSize,
+                        cellSize
                     );
                 }
             }
@@ -827,20 +945,26 @@ export function init() {
 
     copyQrImageBtn.addEventListener('click', async () => {
         try {
-            qrCanvas.toBlob(blob => {
-                if (blob && navigator.clipboard && window.ClipboardItem) {
-                    navigator.clipboard.write([
-                        new ClipboardItem({ 'image/png': blob })
-                    ]).then(() => {
-                        if (window.Atelier && window.Atelier.showToast) {
-                            window.Atelier.showToast('Copied QR image to clipboard!', 'success');
-                        }
-                    });
-                }
+            if (!navigator.clipboard || !window.ClipboardItem) {
+                throw new Error('Clipboard image API unavailable');
+            }
+
+            const blob = await new Promise((resolve) => {
+                qrCanvas.toBlob(resolve, 'image/png');
             });
+
+            if (!blob) throw new Error('Could not create PNG blob');
+
+            await navigator.clipboard.write([
+                new ClipboardItem({ 'image/png': blob })
+            ]);
+
+            if (window.Atelier && window.Atelier.showToast) {
+                window.Atelier.showToast('Copied QR image to clipboard!', 'success');
+            }
         } catch {
             if (window.Atelier && window.Atelier.showToast) {
-                window.Atelier.showToast('Direct clipboard image copy not supported in this browser', 'info');
+                window.Atelier.showToast('Image clipboard copy is not supported here. Use Download PNG instead.', 'info');
             }
         }
     });
