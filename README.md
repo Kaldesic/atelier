@@ -38,7 +38,7 @@ Atelier was rebuilt from the ground up with a focus on maximum performance and p
 
 ---
 
-## 🧰 Full Tool Suite (28 Utilities)
+## 🧰 Full Tool Suite
 
 Atelier includes **28 tools** organized into **5 thematic domains**.
 
