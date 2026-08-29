@@ -7,7 +7,7 @@ const ASSETS_TO_CACHE = [
   `${BASE_PATH}/`,
   `${BASE_PATH}/index.html`,
   `${BASE_PATH}/manifest.json`,
-  `${BASE_PATH}/favicon.svg`,
+  `${BASE_PATH}/favicon.png`,
   `${BASE_PATH}/css/main.css`,
   `${BASE_PATH}/js/core.js`,
   `${BASE_PATH}/js/registry.js`,
