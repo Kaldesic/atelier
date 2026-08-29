@@ -56,9 +56,6 @@
     <link rel="stylesheet" href="css/main.css?v=21">
 </head>
 <body>
-    <!-- Accessibility Skip Link -->
-    <a href="#app-root" class="skip-link">Skip to main content</a>
-
     <!-- Global File Drag and Drop Overlay -->
     <div id="global-dropzone" aria-hidden="true">
         <div class="dropzone-box">
@@ -124,35 +121,9 @@
         </main>
     </div>
 
-    <!-- Accessible Legal & Privacy Modal -->
-    <div id="legalModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-header">
-                <h2 id="legalModalTitle" class="modal-title">License & Privacy Architecture</h2>
-                <button class="modal-close-btn" id="closeLegalModalBtn" aria-label="Close dialog" type="button">&times;</button>
-            </div>
-            <div class="modal-body">
-                <h3>GNU General Public License v3.0 (GPL-3.0)</h3>
-                <p>Atelier is free and open-source software licensed under the <strong>GNU General Public License Version 3</strong>. You are free to run, study, modify, and distribute the application under the terms of the GPL-3.0 license.</p>
-                <pre>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-Copyright (C) 2007 Free Software Foundation, Inc.
-Everyone is permitted to copy and distribute verbatim copies of this license document.</pre>
-
-                <h3>100% RAM Processing & Zero Telemetry Guarantee</h3>
-                <p>All operations in Atelier execute strictly inside your local browser instance via HTML5 APIs, Canvas, Web Workers, and the Web Cryptography API. Atelier does not transmit files, keys, tokens, or queries across any external servers.</p>
-
-                <h3>Offline PWA Resilience</h3>
-                <p>Equipped with a Service Worker (Cache-First strategy), all tool modules function completely offline once installed or cached.</p>
-            </div>
-        </div>
-    </div>
-
     <footer>
         <p>100% Client-side processing • Zero telemetry • Processing strictly in RAM</p>
-        <p>
-            <button class="footer-link" id="openLegalModalBtn" type="button">GNU GPL-3.0 License & Privacy Notice</button> • 
-            Built with precision for web developers & designers.
-        </p>
+        <p>Atelier • Built with precision for web developers & designers.</p>
     </footer>
 
     <script src="js/core.js"></script>
