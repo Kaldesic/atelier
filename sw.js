@@ -1,4 +1,4 @@
-const CACHE_NAME = 'atelier-v20';
+const CACHE_NAME = 'atelier-v21';
 
 // Base path resolution for GitHub Pages deployment (/atelier/) vs root domain
 const BASE_PATH = self.location.pathname.includes('/atelier/') ? '/atelier' : '';
@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
   `${BASE_PATH}/index.html`,
   `${BASE_PATH}/manifest.json`,
   `${BASE_PATH}/favicon.png`,
+  `${BASE_PATH}/favicon.svg`,
   `${BASE_PATH}/css/main.css`,
   `${BASE_PATH}/js/core.js`,
   `${BASE_PATH}/js/registry.js`,
@@ -15,30 +16,33 @@ const ASSETS_TO_CACHE = [
   `${BASE_PATH}/js/workers/image-worker.js`,
   `${BASE_PATH}/js/tools/aspect-ratio-calculator.js`,
   `${BASE_PATH}/js/tools/base64-converter.js`,
+  `${BASE_PATH}/js/tools/batch-processor.js`,
+  `${BASE_PATH}/js/tools/box-shadow-generator.js`,
+  `${BASE_PATH}/js/tools/color-converter.js`,
   `${BASE_PATH}/js/tools/color-extractor.js`,
   `${BASE_PATH}/js/tools/exif-stripper.js`,
   `${BASE_PATH}/js/tools/favicon-generator.js`,
+  `${BASE_PATH}/js/tools/gradient-generator.js`,
+  `${BASE_PATH}/js/tools/html-entity-encoder.js`,
   `${BASE_PATH}/js/tools/image-compressor.js`,
   `${BASE_PATH}/js/tools/image-resizer.js`,
+  `${BASE_PATH}/js/tools/image-to-pdf.js`,
+  `${BASE_PATH}/js/tools/json-formatter.js`,
+  `${BASE_PATH}/js/tools/jwt-decoder.js`,
+  `${BASE_PATH}/js/tools/jwt-secret-generator.js`,
+  `${BASE_PATH}/js/tools/lorem-generator.js`,
+  `${BASE_PATH}/js/tools/markdown-previewer.js`,
+  `${BASE_PATH}/js/tools/palette-exporter.js`,
+  `${BASE_PATH}/js/tools/qr-code-studio.js`,
+  `${BASE_PATH}/js/tools/regex-tester.js`,
+  `${BASE_PATH}/js/tools/sql-formatter.js`,
   `${BASE_PATH}/js/tools/svg-cleaner.js`,
   `${BASE_PATH}/js/tools/svg-converter.js`,
-  `${BASE_PATH}/js/tools/unit-converter.js`,
-  `${BASE_PATH}/js/tools/webp-converter.js`,
-  `${BASE_PATH}/js/tools/json-formatter.js`,
-  `${BASE_PATH}/js/tools/url-encoder.js`,
-  `${BASE_PATH}/js/tools/color-converter.js`,
-  `${BASE_PATH}/js/tools/html-entity-encoder.js`,
-  `${BASE_PATH}/js/tools/box-shadow-generator.js`,
-  `${BASE_PATH}/js/tools/markdown-previewer.js`,
-  `${BASE_PATH}/js/tools/uuid-generator.js`,
-  `${BASE_PATH}/js/tools/regex-tester.js`,
-  `${BASE_PATH}/js/tools/gradient-generator.js`,
-  `${BASE_PATH}/js/tools/jwt-decoder.js`,
-  `${BASE_PATH}/js/tools/lorem-generator.js`,
-  `${BASE_PATH}/js/tools/qr-code-studio.js`,
   `${BASE_PATH}/js/tools/text-diff-case.js`,
-  `${BASE_PATH}/js/tools/image-to-pdf.js`,
-  `${BASE_PATH}/js/tools/batch-processor.js`
+  `${BASE_PATH}/js/tools/unit-converter.js`,
+  `${BASE_PATH}/js/tools/url-encoder.js`,
+  `${BASE_PATH}/js/tools/uuid-generator.js`,
+  `${BASE_PATH}/js/tools/webp-converter.js`
 ];
 
 // 1. Installation - Resilient caching loop
@@ -76,7 +80,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (!url.protocol.startsWith('http')) return;
 
-  // Optimized Navigation Handler (Fixes TTFB Bottleneck)
+  // Optimized Navigation Handler
   if (request.mode === 'navigate') {
     event.respondWith(
       (async () => {
@@ -94,7 +98,7 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         }).catch(() => null);
 
-        // Return cached HTML immediately if present (sub-10ms response)
+        // Return cached HTML immediately if present
         return cachedHTML || (await fetchPromise) || new Response('Offline resource unavailable.', {
           status: 503,
           statusText: 'Service Unavailable',
