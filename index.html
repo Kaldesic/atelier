@@ -35,10 +35,11 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="favicon.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="favicon.png">
     
-    <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self';">
+    <!-- Strict Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; child-src 'self' blob:; object-src 'none';">
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
     
@@ -52,22 +53,25 @@
         })();
     </script>
 
-    <link rel="stylesheet" href="css/main.css?v=20">
+    <link rel="stylesheet" href="css/main.css?v=21">
 </head>
 <body>
+    <!-- Accessibility Skip Link -->
+    <a href="#app-root" class="skip-link">Skip to main content</a>
+
     <!-- Global File Drag and Drop Overlay -->
-    <div id="global-dropzone">
+    <div id="global-dropzone" aria-hidden="true">
         <div class="dropzone-box">
             <div class="dropzone-icon">📥</div>
             <div class="dropzone-title">Drop File to Launch Tool</div>
-            <div class="dropzone-desc">Drop images, SVGs, or data files anywhere to open the optimal Atelier tool</div>
+            <div class="dropzone-desc">Drop images, SVGs, JSON, or Markdown anywhere to open the optimal Atelier tool</div>
         </div>
     </div>
 
     <div class="container">
-        <nav class="nav-back nav-bar" id="nav-back" style="display: none;">
+        <nav class="nav-back nav-bar" id="nav-back" style="display: none;" aria-label="Tool Navigation">
             <a href="#" data-link>← Back to Atelier</a>
-            <button class="theme-toggle-btn" id="theme-toggle-tool" title="Toggle Dark/Light Mode" aria-label="Toggle theme"></button>
+            <button class="theme-toggle-btn" id="theme-toggle-tool" title="Toggle Dark/Light Mode" aria-label="Toggle theme" type="button"></button>
         </nav>
         
         <header id="home-header">
@@ -76,7 +80,7 @@
                     <h1>Atelier</h1>
                     <p class="subtitle">A curated digital workshop for minimalist web tools, daily utilities, and design engineering.</p>
                 </div>
-                <button class="theme-toggle-btn" id="theme-toggle-home" title="Toggle Dark/Light Mode" aria-label="Toggle theme"></button>
+                <button class="theme-toggle-btn" id="theme-toggle-home" title="Toggle Dark/Light Mode" aria-label="Toggle theme" type="button"></button>
             </div>
 
             <div class="privacy-badge">
@@ -90,38 +94,65 @@
                     <span style="font-size: 1.25rem;">✨</span>
                     <div>
                         <div style="font-size: 0.85rem; font-weight: 600; color: var(--text);">Install Atelier App</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Access all 25 tools offline with instant desktop & mobile launch.</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Access all 28 tools offline with instant desktop & mobile launch.</div>
                     </div>
                 </div>
-                <button id="pwa-install-btn" class="btn btn-primary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem; white-space: nowrap;">Install</button>
+                <button id="pwa-install-btn" class="btn btn-primary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem; white-space: nowrap;" type="button">Install</button>
             </div>
         
             <div class="search-container">
                 <div class="search-wrapper">
-                    <input type="text" id="tool-search" class="search-input" placeholder="Search 25 tools (press '/' or 'Ctrl+K')...">
-                    <span class="search-kbd">/</span>
+                    <label for="tool-search" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">Search all tools</label>
+                    <input type="text" id="tool-search" class="search-input" placeholder="Search 28 tools (press '/' or 'Ctrl+K')..." aria-label="Search tools">
+                    <span class="search-kbd" aria-hidden="true">/</span>
                 </div>
             </div>
 
             <!-- Category Filter Bar -->
-            <div class="category-filter-bar" id="categoryFilterBar">
-                <button class="cat-filter-btn active" data-category="ALL">All Tools (25)</button>
-                <button class="cat-filter-btn" data-category="Image & Media Studio">Image & Media</button>
-                <button class="cat-filter-btn" data-category="Vector & Design Engineering">Vector & Design</button>
-                <button class="cat-filter-btn" data-category="Documents & Daily Utilities">Documents & Daily</button>
-                <button class="cat-filter-btn" data-category="Layout & Typography">Typography & Layout</button>
-                <button class="cat-filter-btn" data-category="Developer & Security Tools">Developer & Security</button>
-            </div>
+            <nav class="category-filter-bar" id="categoryFilterBar" aria-label="Filter tools by category">
+                <button class="cat-filter-btn active" data-category="ALL" type="button">All Tools (28)</button>
+                <button class="cat-filter-btn" data-category="Developer & Security Tools" type="button">Developer & Security</button>
+                <button class="cat-filter-btn" data-category="Vector & Design Engineering" type="button">Vector & Design</button>
+                <button class="cat-filter-btn" data-category="Image & Media Studio" type="button">Image & Media</button>
+                <button class="cat-filter-btn" data-category="Layout & Typography" type="button">Typography & Layout</button>
+                <button class="cat-filter-btn" data-category="Documents & Daily Utilities" type="button">Documents & Daily</button>
+            </nav>
         </header>
 
-        <main id="app-root">
+        <main id="app-root" tabindex="-1">
             <!-- Dynamic routing injects content here -->
         </main>
     </div>
 
+    <!-- Accessible Legal & Privacy Modal -->
+    <div id="legalModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="legalModalTitle" class="modal-title">License & Privacy Architecture</h2>
+                <button class="modal-close-btn" id="closeLegalModalBtn" aria-label="Close dialog" type="button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>GNU General Public License v3.0 (GPL-3.0)</h3>
+                <p>Atelier is free and open-source software licensed under the <strong>GNU General Public License Version 3</strong>. You are free to run, study, modify, and distribute the application under the terms of the GPL-3.0 license.</p>
+                <pre>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+Copyright (C) 2007 Free Software Foundation, Inc.
+Everyone is permitted to copy and distribute verbatim copies of this license document.</pre>
+
+                <h3>100% RAM Processing & Zero Telemetry Guarantee</h3>
+                <p>All operations in Atelier execute strictly inside your local browser instance via HTML5 APIs, Canvas, Web Workers, and the Web Cryptography API. Atelier does not transmit files, keys, tokens, or queries across any external servers.</p>
+
+                <h3>Offline PWA Resilience</h3>
+                <p>Equipped with a Service Worker (Cache-First strategy), all tool modules function completely offline once installed or cached.</p>
+            </div>
+        </div>
+    </div>
+
     <footer>
-        <p>100% Client-side processing • No analytics • Processing strictly in RAM</p>
-        <p>Built with precision for web developers & designers.</p>
+        <p>100% Client-side processing • Zero telemetry • Processing strictly in RAM</p>
+        <p>
+            <button class="footer-link" id="openLegalModalBtn" type="button">GNU GPL-3.0 License & Privacy Notice</button> • 
+            Built with precision for web developers & designers.
+        </p>
     </footer>
 
     <script src="js/core.js"></script>
