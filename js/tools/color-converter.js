@@ -1,3 +1,4 @@
+// js/tools/color-converter.js
 export const html = `
     <h1>Color Converter & Contrast Matrix</h1>
     <p class="subtitle">Convert between HEX, RGB, HSL color spaces and test WCAG 2.1 accessibility compliance in real time.</p>
@@ -11,7 +12,7 @@ export const html = `
             </div>
             <div style="flex: 1; min-width: 200px;">
                 <div class="input-label" style="margin-bottom: 0.25rem;">Active Color Preview</div>
-                <div id="colorSampleBar" style="height: 36px; border-radius: 8px; background-color: #00e599; border: 1px solid var(--border); display: flex; align-items: center; padding-left: 1rem; font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; color: #0f1115;">
+                <div id="colorSampleBar" style="height: 36px; border-radius: 8px; background-color: #00e599; border: 1px solid var(--border); display: flex; align-items: center; padding-left: 1rem; font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; color: #0f1115; transition: background-color 0.1s ease;">
                     #00e599
                 </div>
             </div>
@@ -75,7 +76,7 @@ export const html = `
     <div class="tool-section">
         <h2 class="tool-section-title" style="margin-bottom: 1rem;">WCAG 2.1 Contrast Checker</h2>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;" class="contrast-inputs-grid">
             <div class="input-group">
                 <label for="textColorInput" class="input-label">Foreground (Text)</label>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -151,6 +152,7 @@ export function init() {
 
     // Helper functions
     function hexToRgb(hex) {
+        if (!hex) return null;
         let cleanHex = hex.replace('#', '').trim();
         if (cleanHex.length === 3) {
             cleanHex = cleanHex.split('').map(c => c + c).join('');
@@ -173,9 +175,7 @@ export function init() {
     }
 
     function rgbToHsl(r, g, b) {
-        r /= 255;
-        g /= 255;
-        b /= 255;
+        r /= 255; g /= 255; b /= 255;
         const max = Math.max(r, g, b);
         const min = Math.min(r, g, b);
         let h, s;
@@ -201,9 +201,7 @@ export function init() {
     }
 
     function hslToRgb(h, s, l) {
-        h = h / 360;
-        s = s / 100;
-        l = l / 100;
+        h /= 360; s /= 100; l /= 100;
         let r, g, b;
 
         if (s === 0) {
@@ -230,7 +228,7 @@ export function init() {
         };
     }
 
-    function updateFromRgb(r, g, b) {
+    function updateFromRgb(r, g, b, sourceElement = null) {
         r = Math.max(0, Math.min(255, r));
         g = Math.max(0, Math.min(255, g));
         b = Math.max(0, Math.min(255, b));
@@ -241,13 +239,15 @@ export function init() {
         nativeColorPicker.value = hex;
         colorSampleBar.style.backgroundColor = hex;
         colorSampleBar.innerText = hex;
-        // Text color inside sample bar based on luminance
+        
+        // Dynamic text color on sample bar based on luminance
         const lum = getLuminance(r, g, b);
         colorSampleBar.style.color = lum > 0.4 ? '#0f1115' : '#ffffff';
 
-        hexInput.value = hex;
-        rgbInput.value = `rgb(${r}, ${g}, ${b})`;
-        hslInput.value = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+        // Update inputs only if they were not the source of change (prevents caret jumping)
+        if (sourceElement !== hexInput) hexInput.value = hex;
+        if (sourceElement !== rgbInput) rgbInput.value = `rgb(${r}, ${g}, ${b})`;
+        if (sourceElement !== hslInput) hslInput.value = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
 
         rSlider.value = r;
         gSlider.value = g;
@@ -257,27 +257,33 @@ export function init() {
         bVal.innerText = b;
     }
 
-    // Sliders
+    // Sliders Event Handlers
     [rSlider, gSlider, bSlider].forEach(slider => {
-        slider.addEventListener('input', () => {
+        const handleSlider = () => {
             updateFromRgb(parseInt(rSlider.value, 10), parseInt(gSlider.value, 10), parseInt(bSlider.value, 10));
+        };
+        slider.addEventListener('input', handleSlider);
+        slider.addEventListener('change', handleSlider);
+    });
+
+    // Native Color Picker Event Handlers
+    ['input', 'change'].forEach(evt => {
+        nativeColorPicker.addEventListener(evt, (e) => {
+            const rgb = hexToRgb(e.target.value);
+            if (rgb) updateFromRgb(rgb.r, rgb.g, rgb.b, nativeColorPicker);
         });
     });
 
-    nativeColorPicker.addEventListener('input', (e) => {
-        const rgb = hexToRgb(e.target.value);
-        if (rgb) updateFromRgb(rgb.r, rgb.g, rgb.b);
-    });
-
+    // Text Inputs Event Handlers
     hexInput.addEventListener('input', (e) => {
         const rgb = hexToRgb(e.target.value);
-        if (rgb) updateFromRgb(rgb.r, rgb.g, rgb.b);
+        if (rgb) updateFromRgb(rgb.r, rgb.g, rgb.b, hexInput);
     });
 
     rgbInput.addEventListener('input', (e) => {
         const match = e.target.value.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
         if (match) {
-            updateFromRgb(parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10));
+            updateFromRgb(parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10), rgbInput);
         }
     });
 
@@ -285,18 +291,18 @@ export function init() {
         const match = e.target.value.match(/(\d+)\s*,\s*(\d+)%?\s*,\s*(\d+)%?/);
         if (match) {
             const rgb = hslToRgb(parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10));
-            updateFromRgb(rgb.r, rgb.g, rgb.b);
+            updateFromRgb(rgb.r, rgb.g, rgb.b, hslInput);
         }
     });
 
-    // Copy target buttons
+    // Copy Button Functionality
     document.querySelectorAll('[data-copy-target]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const targetId = e.currentTarget.getAttribute('data-copy-target');
             const target = document.getElementById(targetId);
             if (target && target.value) {
                 navigator.clipboard.writeText(target.value).then(() => {
-                    window.Atelier.showToast('Copied to clipboard!', 'success');
+                    window.Atelier?.showToast('Copied to clipboard!', 'success');
                 });
             }
         });
@@ -328,6 +334,10 @@ export function init() {
 
         if (!textRgb || !bgRgb) return;
 
+        // Ensure pickers display full 6-digit valid HEX
+        textColorPicker.value = rgbToHex(textRgb.r, textRgb.g, textRgb.b);
+        bgColorPicker.value = rgbToHex(bgRgb.r, bgRgb.g, bgRgb.b);
+
         contrastPreviewBox.style.color = textHex;
         contrastPreviewBox.style.backgroundColor = bgHex;
 
@@ -343,41 +353,43 @@ export function init() {
     }
 
     function updateBadge(badgeEl, isPass) {
+        if (!badgeEl) return;
         const statusSpan = badgeEl.querySelector('.badge-status');
         if (isPass) {
             badgeEl.className = 'wcag-badge badge-pass';
-            statusSpan.innerText = 'PASS';
+            if (statusSpan) statusSpan.innerText = 'PASS';
         } else {
             badgeEl.className = 'wcag-badge badge-fail';
-            statusSpan.innerText = 'FAIL';
+            if (statusSpan) statusSpan.innerText = 'FAIL';
         }
     }
 
-    textColorPicker.addEventListener('input', (e) => {
-        textColorInput.value = e.target.value;
-        updateContrast();
+    // Contrast Inputs Event Handlers
+    ['input', 'change'].forEach(evt => {
+        textColorPicker.addEventListener(evt, (e) => {
+            textColorInput.value = e.target.value;
+            updateContrast();
+        });
+
+        bgColorPicker.addEventListener(evt, (e) => {
+            bgColorInput.value = e.target.value;
+            updateContrast();
+        });
     });
 
     textColorInput.addEventListener('input', (e) => {
         if (hexToRgb(e.target.value)) {
-            textColorPicker.value = e.target.value;
             updateContrast();
         }
-    });
-
-    bgColorPicker.addEventListener('input', (e) => {
-        bgColorInput.value = e.target.value;
-        updateContrast();
     });
 
     bgColorInput.addEventListener('input', (e) => {
         if (hexToRgb(e.target.value)) {
-            bgColorPicker.value = e.target.value;
             updateContrast();
         }
     });
 
-    // Initial update
+    // Initial update execution
     updateFromRgb(0, 229, 153);
     updateContrast();
 }
