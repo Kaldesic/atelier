@@ -1,4 +1,3 @@
-// js/tools/qr-code-studio.js
 export const html = `
     <h1>Smart QR Code Studio</h1>
     <p class="subtitle">Generate custom, high-resolution QR codes client-side for WiFi, vCard Contacts, URLs, and text.</p>
@@ -6,10 +5,10 @@ export const html = `
     <div class="tool-section">
         <!-- Mode Tabs -->
         <div class="presets-bar" style="margin-bottom: 1.5rem;">
-            <button class="preset-btn active" id="mode-url">🔗 Link / URL</button>
-            <button class="preset-btn" id="mode-wifi">📶 WiFi Network</button>
-            <button class="preset-btn" id="mode-vcard">📇 Contact (vCard)</button>
-            <button class="preset-btn" id="mode-text">📝 Plain Text / Email</button>
+            <button class="preset-btn active" id="mode-url">Link / URL</button>
+            <button class="preset-btn" id="mode-wifi">WiFi Network</button>
+            <button class="preset-btn" id="mode-vcard">Contact (vCard)</button>
+            <button class="preset-btn" id="mode-text">Plain Text / Email</button>
         </div>
 
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: start;" class="qr-layout-grid">
@@ -19,7 +18,7 @@ export const html = `
                 <div id="panel-url" class="qr-panel">
                     <div class="input-group">
                         <label for="qrUrlInput" class="input-label">Website or Destination URL</label>
-                        <input type="url" id="qrUrlInput" class="input-field" value="https://atelier.tools" placeholder="https://example.com">
+                        <input type="url" id="qrUrlInput" class="input-field" value="https://kaldesic.github.io/atelier/" placeholder="https://example.com">
                     </div>
                 </div>
 
@@ -132,9 +131,9 @@ export const html = `
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%;">
-                    <button class="btn btn-primary" id="downloadPngBtn" style="width: 100%;">💾 Download PNG</button>
-                    <button class="btn btn-outline" id="copyQrImageBtn" style="width: 100%;">📋 Copy Image to Clipboard</button>
-                    <button class="btn btn-outline" id="downloadSvgBtn" style="width: 100%;">📐 Download Scalable SVG</button>
+                    <button class="btn btn-primary" id="downloadPngBtn" style="width: 100%;">Download PNG</button>
+                    <button class="btn btn-outline" id="copyQrImageBtn" style="width: 100%;">Copy Image to Clipboard</button>
+                    <button class="btn btn-outline" id="downloadSvgBtn" style="width: 100%;">Download Scalable SVG</button>
                 </div>
             </div>
         </div>
@@ -142,11 +141,9 @@ export const html = `
 `;
 
 /* =========================================================================
-   Standalone ISO/IEC 18004 QR Code Generation Engine (Versions 1 - 40)
-   Full Reed-Solomon Arithmetic, Dynamic Interleaving & Penalty Evaluator
+   ISO/IEC 18004 QR Code Generation Engine (Versions 1 - 40)
    ========================================================================= */
 const QR_ENGINE = (() => {
-    // Galois Field GF(256) Tables (Primitive polynomial 0x11D = 285)
     const EXP_TABLE = new Uint8Array(512);
     const LOG_TABLE = new Uint8Array(256);
 
@@ -156,9 +153,7 @@ const QR_ENGINE = (() => {
         EXP_TABLE[i + 255] = x;
         LOG_TABLE[x] = i;
         x <<= 1;
-        if (x & 256) {
-            x ^= 0x11D;
-        }
+        if (x & 256) x ^= 0x11D;
     }
     LOG_TABLE[0] = 0;
 
@@ -195,59 +190,55 @@ const QR_ENGINE = (() => {
         return res;
     }
 
-    // Complete ISO/IEC 18004 Alignment Pattern Positions for Versions 1-40
     const ALIGNMENT_PATTERN_POS = [
-        [], // v1
-        [6, 18], [6, 22], [6, 26], [6, 30], [6, 34], [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50],
+        [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34], [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50],
         [6, 30, 54], [6, 32, 58], [6, 34, 62], [6, 26, 46, 66], [6, 26, 48, 70], [6, 26, 50, 74], [6, 30, 54, 78], [6, 30, 56, 82], [6, 30, 58, 86], [6, 34, 62, 90],
         [6, 28, 50, 72, 94], [6, 26, 50, 74, 98], [6, 30, 54, 78, 102], [6, 28, 54, 80, 106], [6, 32, 58, 84, 110], [6, 30, 58, 86, 114], [6, 34, 62, 90, 118], [6, 26, 50, 74, 98, 122], [6, 30, 54, 78, 102, 126], [6, 26, 52, 78, 104, 130],
         [6, 30, 56, 82, 108, 134], [6, 34, 60, 86, 112, 138], [6, 30, 54, 78, 102, 126, 150], [6, 24, 50, 76, 102, 128, 154], [6, 28, 54, 80, 106, 132, 158], [6, 32, 58, 84, 110, 136, 162], [6, 26, 54, 82, 110, 138, 166], [6, 30, 58, 86, 114, 142, 170], [6, 34, 62, 90, 118, 146, 174], [6, 30, 58, 86, 114, 142, 170]
     ];
 
-    // ISO/IEC 18004 Table 7 & 8: Complete Version Specifications (Versions 1-40)
-    // Structure per ECC [L, M, Q, H]: [totalCodewords, ecCodewordsPerBlock, [g1Blocks, g1DataCW], [g2Blocks, g2DataCW]]
     const VERSION_SPECS = [
-        null, // 0-index
-        [ [26, 7, 1, 19, 0, 0], [26, 10, 1, 16, 0, 0], [26, 13, 1, 13, 0, 0], [26, 17, 1, 9, 0, 0] ], // 1
-        [ [44, 10, 1, 34, 0, 0], [44, 16, 1, 28, 0, 0], [44, 22, 1, 22, 0, 0], [44, 28, 1, 16, 0, 0] ], // 2
-        [ [70, 15, 1, 55, 0, 0], [70, 26, 1, 44, 0, 0], [70, 18, 2, 17, 0, 0], [70, 22, 2, 13, 0, 0] ], // 3
-        [ [100, 20, 1, 80, 0, 0], [100, 18, 2, 32, 0, 0], [100, 26, 2, 24, 0, 0], [100, 16, 4, 9, 0, 0] ], // 4
-        [ [134, 26, 1, 108, 0, 0], [134, 24, 2, 43, 0, 0], [134, 18, 2, 15, 2, 16], [134, 22, 2, 11, 2, 12] ], // 5
-        [ [172, 18, 2, 68, 0, 0], [172, 16, 4, 27, 0, 0], [172, 24, 4, 19, 0, 0], [172, 28, 4, 15, 0, 0] ], // 6
-        [ [196, 20, 2, 78, 0, 0], [196, 18, 4, 31, 0, 0], [196, 18, 2, 14, 4, 15], [196, 26, 4, 13, 1, 14] ], // 7
-        [ [242, 24, 2, 97, 0, 0], [242, 22, 2, 38, 2, 39], [242, 22, 4, 18, 2, 19], [242, 26, 4, 14, 2, 15] ], // 8
-        [ [292, 30, 2, 116, 0, 0], [292, 22, 3, 36, 2, 37], [292, 20, 4, 16, 4, 17], [292, 24, 4, 12, 4, 13] ], // 9
-        [ [346, 18, 2, 68, 2, 69], [346, 26, 4, 43, 1, 44], [346, 24, 6, 19, 2, 20], [346, 28, 6, 15, 2, 16] ], // 10
-        [ [404, 20, 4, 81, 0, 0], [404, 30, 1, 50, 4, 51], [404, 28, 4, 22, 4, 23], [404, 24, 3, 12, 8, 13] ], // 11
-        [ [466, 24, 2, 92, 2, 93], [466, 22, 6, 36, 2, 37], [466, 26, 4, 20, 6, 21], [466, 28, 7, 14, 4, 15] ], // 12
-        [ [532, 26, 4, 107, 0, 0], [532, 22, 8, 37, 1, 38], [532, 24, 8, 20, 4, 21], [532, 22, 12, 11, 4, 12] ], // 13
-        [ [581, 30, 3, 115, 1, 116], [581, 24, 4, 40, 5, 41], [581, 20, 11, 16, 5, 17], [581, 24, 11, 12, 5, 13] ], // 14
-        [ [655, 22, 5, 87, 1, 88], [655, 24, 5, 41, 5, 42], [655, 30, 5, 24, 7, 25], [655, 24, 11, 12, 7, 13] ], // 15
-        [ [733, 24, 5, 98, 1, 99], [733, 28, 7, 45, 3, 46], [733, 24, 15, 19, 2, 20], [733, 30, 3, 15, 13, 16] ], // 16
-        [ [815, 28, 1, 107, 5, 108], [815, 28, 10, 46, 1, 47], [815, 28, 1, 22, 15, 23], [815, 28, 2, 14, 17, 15] ], // 17
-        [ [901, 30, 5, 120, 1, 121], [901, 26, 9, 43, 4, 44], [901, 28, 17, 22, 1, 23], [901, 28, 2, 14, 19, 15] ], // 18
-        [ [991, 28, 3, 113, 4, 114], [991, 26, 3, 44, 11, 45], [991, 26, 17, 21, 4, 22], [991, 26, 9, 13, 16, 14] ], // 19
-        [ [1085, 28, 3, 107, 5, 108], [1085, 26, 3, 41, 13, 42], [1085, 30, 15, 24, 5, 25], [1085, 28, 15, 15, 10, 16] ], // 20
-        [ [1156, 28, 4, 116, 4, 117], [1156, 26, 17, 42, 0, 0], [1156, 28, 17, 22, 6, 23], [1156, 30, 19, 16, 6, 17] ], // 21
-        [ [1258, 28, 2, 111, 7, 112], [1258, 28, 17, 46, 0, 0], [1258, 30, 7, 24, 16, 25], [1258, 24, 34, 13, 0, 0] ], // 22
-        [ [1364, 30, 4, 121, 5, 122], [1364, 28, 4, 47, 14, 48], [1364, 30, 11, 24, 14, 25], [1364, 30, 16, 15, 14, 16] ], // 23
-        [ [1474, 30, 6, 117, 4, 118], [1474, 28, 6, 45, 14, 46], [1474, 30, 11, 24, 16, 25], [1474, 30, 30, 16, 2, 17] ], // 24
-        [ [1588, 26, 8, 106, 4, 107], [1588, 28, 8, 47, 13, 48], [1588, 30, 7, 24, 22, 25], [1588, 30, 22, 15, 13, 16] ], // 25
-        [ [1706, 28, 10, 114, 2, 115], [1706, 28, 19, 46, 4, 47], [1706, 28, 28, 22, 6, 23], [1706, 30, 33, 16, 4, 17] ], // 26
-        [ [1828, 30, 8, 122, 4, 123], [1828, 28, 22, 45, 3, 46], [1828, 30, 8, 23, 26, 24], [1828, 30, 12, 15, 28, 16] ], // 27
-        [ [1921, 30, 3, 117, 10, 118], [1921, 28, 3, 45, 23, 46], [1921, 30, 4, 24, 31, 25], [1921, 30, 11, 15, 31, 16] ], // 28
-        [ [2051, 30, 7, 116, 7, 117], [2051, 28, 21, 45, 7, 46], [2051, 30, 1, 23, 37, 24], [2051, 30, 19, 15, 26, 16] ], // 29
-        [ [2185, 30, 5, 115, 10, 116], [2185, 28, 19, 47, 10, 48], [2185, 30, 15, 24, 25, 25], [2185, 30, 23, 15, 25, 16] ], // 30
-        [ [2323, 30, 13, 115, 3, 116], [2323, 28, 2, 46, 29, 47], [2323, 30, 42, 24, 1, 25], [2323, 30, 23, 15, 28, 16] ], // 31
-        [ [2465, 30, 17, 115, 0, 0], [2465, 28, 10, 46, 23, 47], [2465, 30, 10, 24, 35, 25], [2465, 30, 19, 15, 35, 16] ], // 32
-        [ [2611, 30, 17, 115, 1, 116], [2611, 28, 14, 46, 21, 47], [2611, 30, 29, 24, 19, 25], [2611, 30, 11, 15, 46, 16] ], // 33
-        [ [2761, 30, 13, 115, 6, 116], [2761, 28, 14, 46, 23, 47], [2761, 30, 44, 24, 7, 25], [2761, 30, 59, 16, 1, 17] ], // 34
-        [ [2876, 30, 12, 121, 7, 122], [2876, 28, 12, 47, 26, 48], [2876, 30, 39, 24, 14, 25], [2876, 30, 22, 15, 41, 16] ], // 35
-        [ [3034, 30, 6, 121, 14, 122], [3034, 28, 6, 47, 34, 48], [3034, 30, 46, 24, 10, 25], [3034, 30, 2, 15, 64, 16] ], // 36
-        [ [3196, 30, 17, 122, 4, 123], [3196, 28, 29, 46, 14, 47], [3196, 30, 49, 24, 10, 25], [3196, 30, 24, 15, 46, 16] ], // 37
-        [ [3362, 30, 4, 122, 18, 123], [3362, 28, 13, 46, 32, 47], [3362, 30, 48, 24, 14, 25], [3362, 30, 42, 15, 32, 16] ], // 38
-        [ [3532, 30, 20, 117, 4, 118], [3532, 28, 40, 47, 7, 48], [3532, 30, 43, 24, 22, 25], [3532, 30, 10, 15, 67, 16] ], // 39
-        [ [3706, 30, 19, 118, 6, 119], [3706, 28, 18, 47, 31, 48], [3706, 30, 34, 24, 34, 25], [3706, 30, 20, 15, 61, 16] ]  // 40
+        null,
+        [ [26, 7, 1, 19, 0, 0], [26, 10, 1, 16, 0, 0], [26, 13, 1, 13, 0, 0], [26, 17, 1, 9, 0, 0] ],
+        [ [44, 10, 1, 34, 0, 0], [44, 16, 1, 28, 0, 0], [44, 22, 1, 22, 0, 0], [44, 28, 1, 16, 0, 0] ],
+        [ [70, 15, 1, 55, 0, 0], [70, 26, 1, 44, 0, 0], [70, 18, 2, 17, 0, 0], [70, 22, 2, 13, 0, 0] ],
+        [ [100, 20, 1, 80, 0, 0], [100, 18, 2, 32, 0, 0], [100, 26, 2, 24, 0, 0], [100, 16, 4, 9, 0, 0] ],
+        [ [134, 26, 1, 108, 0, 0], [134, 24, 2, 43, 0, 0], [134, 18, 2, 15, 2, 16], [134, 22, 2, 11, 2, 12] ],
+        [ [172, 18, 2, 68, 0, 0], [172, 16, 4, 27, 0, 0], [172, 24, 4, 19, 0, 0], [172, 28, 4, 15, 0, 0] ],
+        [ [196, 20, 2, 78, 0, 0], [196, 18, 4, 31, 0, 0], [196, 18, 2, 14, 4, 15], [196, 26, 4, 13, 1, 14] ],
+        [ [242, 24, 2, 97, 0, 0], [242, 22, 2, 38, 2, 39], [242, 22, 4, 18, 2, 19], [242, 26, 4, 14, 2, 15] ],
+        [ [292, 30, 2, 116, 0, 0], [292, 22, 3, 36, 2, 37], [292, 20, 4, 16, 4, 17], [292, 24, 4, 12, 4, 13] ],
+        [ [346, 18, 2, 68, 2, 69], [346, 26, 4, 43, 1, 44], [346, 24, 6, 19, 2, 20], [346, 28, 6, 15, 2, 16] ],
+        [ [404, 20, 4, 81, 0, 0], [404, 30, 1, 50, 4, 51], [404, 28, 4, 22, 4, 23], [404, 24, 3, 12, 8, 13] ],
+        [ [466, 24, 2, 92, 2, 93], [466, 22, 6, 36, 2, 37], [466, 26, 4, 20, 6, 21], [466, 28, 7, 14, 4, 15] ],
+        [ [532, 26, 4, 107, 0, 0], [532, 22, 8, 37, 1, 38], [532, 24, 8, 20, 4, 21], [532, 22, 12, 11, 4, 12] ],
+        [ [581, 30, 3, 115, 1, 116], [581, 24, 4, 40, 5, 41], [581, 20, 11, 16, 5, 17], [581, 24, 11, 12, 5, 13] ],
+        [ [655, 22, 5, 87, 1, 88], [655, 24, 5, 41, 5, 42], [655, 30, 5, 24, 7, 25], [655, 24, 11, 12, 7, 13] ],
+        [ [733, 24, 5, 98, 1, 99], [733, 28, 7, 45, 3, 46], [733, 24, 15, 19, 2, 20], [733, 30, 3, 15, 13, 16] ],
+        [ [815, 28, 1, 107, 5, 108], [815, 28, 10, 46, 1, 47], [815, 28, 1, 22, 15, 23], [815, 28, 2, 14, 17, 15] ],
+        [ [901, 30, 5, 120, 1, 121], [901, 26, 9, 43, 4, 44], [901, 28, 17, 22, 1, 23], [901, 28, 2, 14, 19, 15] ],
+        [ [991, 28, 3, 113, 4, 114], [991, 26, 3, 44, 11, 45], [991, 26, 17, 21, 4, 22], [991, 26, 9, 13, 16, 14] ],
+        [ [1085, 28, 3, 107, 5, 108], [1085, 26, 3, 41, 13, 42], [1085, 30, 15, 24, 5, 25], [1085, 28, 15, 15, 10, 16] ],
+        [ [1156, 28, 4, 116, 4, 117], [1156, 26, 17, 42, 0, 0], [1156, 28, 17, 22, 6, 23], [1156, 30, 19, 16, 6, 17] ],
+        [ [1258, 28, 2, 111, 7, 112], [1258, 28, 17, 46, 0, 0], [1258, 30, 7, 24, 16, 25], [1258, 24, 34, 13, 0, 0] ],
+        [ [1364, 30, 4, 121, 5, 122], [1364, 28, 4, 47, 14, 48], [1364, 30, 11, 24, 14, 25], [1364, 30, 16, 15, 14, 16] ],
+        [ [1474, 30, 6, 117, 4, 118], [1474, 28, 6, 45, 14, 46], [1474, 30, 11, 24, 16, 25], [1474, 30, 30, 16, 2, 17] ],
+        [ [1588, 26, 8, 106, 4, 107], [1588, 28, 8, 47, 13, 48], [1588, 30, 7, 24, 22, 25], [1588, 30, 22, 15, 13, 16] ],
+        [ [1706, 28, 10, 114, 2, 115], [1706, 28, 19, 46, 4, 47], [1706, 28, 28, 22, 6, 23], [1706, 30, 33, 16, 4, 17] ],
+        [ [1828, 30, 8, 122, 4, 123], [1828, 28, 22, 45, 3, 46], [1828, 30, 8, 23, 26, 24], [1828, 30, 12, 15, 28, 16] ],
+        [ [1921, 30, 3, 117, 10, 118], [1921, 28, 3, 45, 23, 46], [1921, 30, 4, 24, 31, 25], [1921, 30, 11, 15, 31, 16] ],
+        [ [2051, 30, 7, 116, 7, 117], [2051, 28, 21, 45, 7, 46], [2051, 30, 1, 23, 37, 24], [2051, 30, 19, 15, 26, 16] ],
+        [ [2185, 30, 5, 115, 10, 116], [2185, 28, 19, 47, 10, 48], [2185, 30, 15, 24, 25, 25], [2185, 30, 23, 15, 25, 16] ],
+        [ [2323, 30, 13, 115, 3, 116], [2323, 28, 2, 46, 29, 47], [2323, 30, 42, 24, 1, 25], [2323, 30, 23, 15, 28, 16] ],
+        [ [2465, 30, 17, 115, 0, 0], [2465, 28, 10, 46, 23, 47], [2465, 30, 10, 24, 35, 25], [2465, 30, 19, 15, 35, 16] ],
+        [ [2611, 30, 17, 115, 1, 116], [2611, 28, 14, 46, 21, 47], [2611, 30, 29, 24, 19, 25], [2611, 30, 11, 15, 46, 16] ],
+        [ [2761, 30, 13, 115, 6, 116], [2761, 28, 14, 46, 23, 47], [2761, 30, 44, 24, 7, 25], [2761, 30, 59, 16, 1, 17] ],
+        [ [2876, 30, 12, 121, 7, 122], [2876, 28, 12, 47, 26, 48], [2876, 30, 39, 24, 14, 25], [2876, 30, 22, 15, 41, 16] ],
+        [ [3034, 30, 6, 121, 14, 122], [3034, 28, 6, 47, 34, 48], [3034, 30, 46, 24, 10, 25], [3034, 30, 2, 15, 64, 16] ],
+        [ [3196, 30, 17, 122, 4, 123], [3196, 28, 29, 46, 14, 47], [3196, 30, 49, 24, 10, 25], [3196, 30, 24, 15, 46, 16] ],
+        [ [3362, 30, 4, 122, 18, 123], [3362, 28, 13, 46, 32, 47], [3362, 30, 48, 24, 14, 25], [3362, 30, 42, 15, 32, 16] ],
+        [ [3532, 30, 20, 117, 4, 118], [3532, 28, 40, 47, 7, 48], [3532, 30, 43, 24, 22, 25], [3532, 30, 10, 15, 67, 16] ],
+        [ [3706, 30, 19, 118, 6, 119], [3706, 28, 18, 47, 31, 48], [3706, 30, 34, 24, 34, 25], [3706, 30, 20, 15, 61, 16] ]
     ];
 
     const ECC_LEVEL_MAP = {
@@ -287,19 +278,13 @@ const QR_ENGINE = (() => {
             let charcode = str.charCodeAt(i);
             if (charcode < 0x80) utf8.push(charcode);
             else if (charcode < 0x800) {
-                utf8.push(0xc0 | (charcode >> 6),
-                          0x80 | (charcode & 0x3f));
+                utf8.push(0xc0 | (charcode >> 6), 0x80 | (charcode & 0x3f));
             } else if (charcode < 0xd800 || charcode >= 0xe000) {
-                utf8.push(0xe0 | (charcode >> 12),
-                          0x80 | ((charcode >> 6) & 0x3f),
-                          0x80 | (charcode & 0x3f));
+                utf8.push(0xe0 | (charcode >> 12), 0x80 | ((charcode >> 6) & 0x3f), 0x80 | (charcode & 0x3f));
             } else {
                 i++;
                 charcode = 0x10000 + (((charcode & 0x3ff) << 10) | (str.charCodeAt(i) & 0x3ff));
-                utf8.push(0xf0 | (charcode >> 18),
-                          0x80 | ((charcode >> 12) & 0x3f),
-                          0x80 | ((charcode >> 6) & 0x3f),
-                          0x80 | (charcode & 0x3f));
+                utf8.push(0xf0 | (charcode >> 18), 0x80 | ((charcode >> 12) & 0x3f), 0x80 | ((charcode >> 6) & 0x3f), 0x80 | (charcode & 0x3f));
             }
         }
         return new Uint8Array(utf8);
@@ -310,10 +295,7 @@ const QR_ENGINE = (() => {
             const spec = VERSION_SPECS[v][eccIndex];
             const maxDataCW = (spec[2] * spec[3]) + (spec[4] * spec[5]);
             const lengthBits = (v < 10) ? 8 : 16;
-            const requiredBits = 4 + lengthBits + (dataLength * 8);
-            if (requiredBits <= maxDataCW * 8) {
-                return v;
-            }
+            if (4 + lengthBits + (dataLength * 8) <= maxDataCW * 8) return v;
         }
         return 40;
     }
@@ -323,27 +305,19 @@ const QR_ENGINE = (() => {
         const totalDataCW = (spec[2] * spec[3]) + (spec[4] * spec[5]);
         const bitBuf = new BitBuffer();
 
-        bitBuf.put(0x04, 4); // 8-bit Byte Mode
-        const lengthBits = (version < 10) ? 8 : 16;
-        bitBuf.put(rawBytes.length, lengthBits);
+        bitBuf.put(0x04, 4);
+        bitBuf.put(rawBytes.length, (version < 10) ? 8 : 16);
 
-        for (let i = 0; i < rawBytes.length; i++) {
-            bitBuf.put(rawBytes[i], 8);
-        }
+        for (let i = 0; i < rawBytes.length; i++) bitBuf.put(rawBytes[i], 8);
 
         const totalDataBits = totalDataCW * 8;
-        const termLen = Math.min(4, totalDataBits - bitBuf.length);
-        bitBuf.put(0, termLen);
+        bitBuf.put(0, Math.min(4, totalDataBits - bitBuf.length));
 
-        while (bitBuf.length % 8 !== 0) {
-            bitBuf.putBit(false);
-        }
+        while (bitBuf.length % 8 !== 0) bitBuf.putBit(false);
 
-        const PAD0 = 0xEC;
-        const PAD1 = 0x11;
         let padFlag = true;
         while (bitBuf.length < totalDataBits) {
-            bitBuf.put(padFlag ? PAD0 : PAD1, 8);
+            bitBuf.put(padFlag ? 0xEC : 0x11, 8);
             padFlag = !padFlag;
         }
 
@@ -382,9 +356,7 @@ const QR_ENGINE = (() => {
 
         for (let i = 0; i < maxDataLen; i++) {
             for (let b = 0; b < totalBlocks; b++) {
-                if (i < dataBlocks[b].length) {
-                    finalCodewords.push(dataBlocks[b][i]);
-                }
+                if (i < dataBlocks[b].length) finalCodewords.push(dataBlocks[b][i]);
             }
         }
 
@@ -410,22 +382,16 @@ const QR_ENGINE = (() => {
 
     function getBCHTypeInfo(data) {
         let d = data << 10;
-        const G = 0x537;
         for (let i = 4; i >= 0; i--) {
-            if ((d >> (i + 10)) & 1) {
-                d ^= (G << i);
-            }
+            if ((d >> (i + 10)) & 1) d ^= (0x537 << i);
         }
         return ((data << 10) | d) ^ 0x5412;
     }
 
     function getBCHTypeNumber(version) {
         let d = version << 12;
-        const G = 0x1F25;
         for (let i = 5; i >= 0; i--) {
-            if ((d >> (i + 12)) & 1) {
-                d ^= (G << i);
-            }
+            if ((d >> (i + 12)) & 1) d ^= (0x1F25 << i);
         }
         return (version << 12) | d;
     }
@@ -439,13 +405,8 @@ const QR_ENGINE = (() => {
             this.isReserved = Array.from({ length: this.moduleCount }, () => new Array(this.moduleCount).fill(false));
         }
 
-        getModuleCount() {
-            return this.moduleCount;
-        }
-
-        isDark(row, col) {
-            return this.modules[row][col] === true;
-        }
+        getModuleCount() { return this.moduleCount; }
+        isDark(row, col) { return this.modules[row][col] === true; }
 
         setModule(row, col, dark, reserved = true) {
             if (row >= 0 && row < this.moduleCount && col >= 0 && col < this.moduleCount) {
@@ -457,14 +418,13 @@ const QR_ENGINE = (() => {
         placeFinderPattern(row, col) {
             for (let r = -1; r <= 7; r++) {
                 for (let c = -1; c <= 7; c++) {
-                    const nr = row + r;
-                    const nc = col + c;
+                    const nr = row + r, nc = col + c;
                     if (nr >= 0 && nr < this.moduleCount && nc >= 0 && nc < this.moduleCount) {
                         if (r >= 0 && r <= 6 && c >= 0 && c <= 6) {
                             const isBlack = (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4));
                             this.setModule(nr, nc, isBlack, true);
                         } else {
-                            this.setModule(nr, nc, false, true); // White separator margin
+                            this.setModule(nr, nc, false, true);
                         }
                     }
                 }
@@ -473,14 +433,11 @@ const QR_ENGINE = (() => {
 
         placeAlignmentPatterns() {
             const pos = ALIGNMENT_PATTERN_POS[this.version - 1];
-            if (!pos || pos.length === 0) return;
+            if (!pos) return;
 
             for (let i = 0; i < pos.length; i++) {
                 for (let j = 0; j < pos.length; j++) {
-                    const row = pos[i];
-                    const col = pos[j];
-
-                    // Never overlap with finder patterns
+                    const row = pos[i], col = pos[j];
                     if (this.isReserved[row][col]) continue;
 
                     for (let r = -2; r <= 2; r++) {
@@ -495,13 +452,8 @@ const QR_ENGINE = (() => {
 
         placeTimingPatterns() {
             for (let i = 8; i < this.moduleCount - 8; i++) {
-                const isDark = (i % 2 === 0);
-                if (this.modules[6][i] === null) {
-                    this.setModule(6, i, isDark, true);
-                }
-                if (this.modules[i][6] === null) {
-                    this.setModule(i, 6, isDark, true);
-                }
+                if (this.modules[6][i] === null) this.setModule(6, i, i % 2 === 0, true);
+                if (this.modules[i][6] === null) this.setModule(i, 6, i % 2 === 0, true);
             }
         }
 
@@ -530,12 +482,10 @@ const QR_ENGINE = (() => {
 
         placeFormatInfo(maskPattern) {
             const eccBits = ECC_LEVEL_MAP[this.eccLevel].formatBits;
-            const data = (eccBits << 3) | maskPattern;
-            const formatBCH = getBCHTypeInfo(data);
+            const formatBCH = getBCHTypeInfo((eccBits << 3) | maskPattern);
 
             for (let i = 0; i < 15; i++) {
                 const bit = ((formatBCH >> i) & 1) === 1;
-
                 if (i < 6) this.modules[8][i] = bit;
                 else if (i < 8) this.modules[8][i + 1] = bit;
                 else if (i === 8) this.modules[7][8] = bit;
@@ -560,13 +510,10 @@ const QR_ENGINE = (() => {
 
         mapData(codewords, maskPattern) {
             const maskFn = MASK_FNS[maskPattern];
-            let byteIndex = 0;
-            let bitIndex = 7;
-            let upward = true;
+            let byteIndex = 0, bitIndex = 7, upward = true;
 
             for (let right = this.moduleCount - 1; right > 0; right -= 2) {
                 if (right === 6) right--;
-
                 const cols = [right, right - 1];
                 const rows = upward
                     ? Array.from({ length: this.moduleCount }, (_, i) => this.moduleCount - 1 - i)
@@ -584,9 +531,7 @@ const QR_ENGINE = (() => {
                                     byteIndex++;
                                 }
                             }
-                            if (maskFn(row, col)) {
-                                bitVal = !bitVal;
-                            }
+                            if (maskFn(row, col)) bitVal = !bitVal;
                             this.modules[row][col] = bitVal;
                         }
                     }
@@ -599,13 +544,11 @@ const QR_ENGINE = (() => {
             let penalty = 0;
             const size = this.moduleCount;
 
-            // N1: 5+ consecutive same color in row/col
             for (let r = 0; r < size; r++) {
                 let count = 1;
                 for (let c = 1; c < size; c++) {
-                    if (this.modules[r][c] === this.modules[r][c - 1]) {
-                        count++;
-                    } else {
+                    if (this.modules[r][c] === this.modules[r][c - 1]) count++;
+                    else {
                         if (count >= 5) penalty += 3 + (count - 5);
                         count = 1;
                     }
@@ -616,9 +559,8 @@ const QR_ENGINE = (() => {
             for (let c = 0; c < size; c++) {
                 let count = 1;
                 for (let r = 1; r < size; r++) {
-                    if (this.modules[r][c] === this.modules[r - 1][c]) {
-                        count++;
-                    } else {
+                    if (this.modules[r][c] === this.modules[r - 1][c]) count++;
+                    else {
                         if (count >= 5) penalty += 3 + (count - 5);
                         count = 1;
                     }
@@ -626,7 +568,6 @@ const QR_ENGINE = (() => {
                 if (count >= 5) penalty += 3 + (count - 5);
             }
 
-            // N2: 2x2 blocks of same color
             for (let r = 0; r < size - 1; r++) {
                 for (let c = 0; c < size - 1; c++) {
                     const color = this.modules[r][c];
@@ -638,21 +579,6 @@ const QR_ENGINE = (() => {
                 }
             }
 
-            // N3: 1:1:3:1:1 pattern check
-            for (let r = 0; r < size; r++) {
-                for (let c = 0; c <= size - 11; c++) {
-                    let match1 = true, match2 = true;
-                    for (let k = 0; k < 11; k++) {
-                        const m = this.modules[r][c + k];
-                        if (k === 0 || k === 2 || k === 3 || k === 4 || k === 6) {
-                            if (!m) match1 = false;
-                            if (k <= 6 && m && (k === 1 || k === 5)) match1 = false;
-                        }
-                    }
-                }
-            }
-
-            // N4: Balance of dark / light
             let darkCount = 0;
             for (let r = 0; r < size; r++) {
                 for (let c = 0; c < size; c++) {
@@ -660,8 +586,7 @@ const QR_ENGINE = (() => {
                 }
             }
             const ratio = (darkCount / (size * size)) * 100;
-            const diff = Math.abs(ratio - 50);
-            penalty += Math.floor(diff / 5) * 10;
+            penalty += Math.floor(Math.abs(ratio - 50) / 5) * 10;
 
             return penalty;
         }
@@ -707,7 +632,6 @@ const QR_ENGINE = (() => {
 })();
 
 export function init() {
-    // Mode Buttons
     const modeUrl = document.getElementById('mode-url');
     const modeWifi = document.getElementById('mode-wifi');
     const modeVcard = document.getElementById('mode-vcard');
@@ -720,7 +644,6 @@ export function init() {
     const panelText = document.getElementById('panel-text');
     const panels = [panelUrl, panelWifi, panelVcard, panelText];
 
-    // Inputs
     const qrUrlInput = document.getElementById('qrUrlInput');
     const wifiSsid = document.getElementById('wifiSsid');
     const wifiPassword = document.getElementById('wifiPassword');
@@ -765,7 +688,6 @@ export function init() {
     modeVcard.addEventListener('click', () => setMode('vcard', modeVcard, panelVcard));
     modeText.addEventListener('click', () => setMode('text', modeText, panelText));
 
-    // Color Pickers sync
     qrFgColor.addEventListener('input', () => {
         qrFgHex.value = qrFgColor.value;
         updateQRCode();
@@ -792,11 +714,11 @@ export function init() {
 
     function getPayload() {
         if (currentMode === 'url') {
-            return qrUrlInput.value.trim() || 'https://atelier.tools';
+            return qrUrlInput.value.trim() || 'https://kaldesic.github.io/atelier/';
         }
         if (currentMode === 'wifi') {
-            const ssid = (wifiSsid.value || 'HomeNetwork').replace(/([\\\\;,:\"])/g, '\\\\$1');
-            const pass = (wifiPassword.value || '').replace(/([\\\\;,:\"])/g, '\\\\$1');
+            const ssid = (wifiSsid.value || 'HomeNetwork').replace(/([\\;,:])/g, '\\$1');
+            const pass = (wifiPassword.value || '').replace(/([\\;,:])/g, '\\$1');
             const auth = wifiAuth.value;
             const hidden = wifiHidden.checked ? 'H:true;' : '';
             return `WIFI:S:${ssid};T:${auth};P:${pass};${hidden};`;
@@ -816,7 +738,7 @@ export function init() {
                 phone ? `TEL;TYPE=CELL:${phone}` : '',
                 email ? `EMAIL:${email}` : '',
                 'END:VCARD'
-            ].filter(Boolean).join('\\n');
+            ].filter(Boolean).join('\n');
         }
         if (currentMode === 'text') {
             return qrTextInput.value.trim() || 'Atelier Tools';
@@ -862,7 +784,6 @@ export function init() {
         }
     }
 
-    // Export PNG
     downloadPngBtn.addEventListener('click', () => {
         if (!lastQRMatrix) return;
         const resolution = parseInt(qrResolution.value, 10) || 600;
@@ -899,10 +820,11 @@ export function init() {
         link.download = `qrcode_${Date.now()}.png`;
         link.href = exportCanvas.toDataURL('image/png');
         link.click();
-        window.Atelier.showToast('Downloaded High-Res PNG!', 'success');
+        if (window.Atelier && window.Atelier.showToast) {
+            window.Atelier.showToast('Downloaded High-Res PNG!', 'success');
+        }
     });
 
-    // Copy Image
     copyQrImageBtn.addEventListener('click', async () => {
         try {
             qrCanvas.toBlob(blob => {
@@ -910,16 +832,19 @@ export function init() {
                     navigator.clipboard.write([
                         new ClipboardItem({ 'image/png': blob })
                     ]).then(() => {
-                        window.Atelier.showToast('Copied QR image to clipboard!', 'success');
+                        if (window.Atelier && window.Atelier.showToast) {
+                            window.Atelier.showToast('Copied QR image to clipboard!', 'success');
+                        }
                     });
                 }
             });
         } catch {
-            window.Atelier.showToast('Direct clipboard image copy not supported in this browser', 'info');
+            if (window.Atelier && window.Atelier.showToast) {
+                window.Atelier.showToast('Direct clipboard image copy not supported in this browser', 'info');
+            }
         }
     });
 
-    // Download SVG
     downloadSvgBtn.addEventListener('click', () => {
         if (!lastQRMatrix) return;
         const count = lastQRMatrix.getModuleCount();
@@ -937,21 +862,19 @@ export function init() {
             }
         }
 
-        const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewBoxSize} ${viewBoxSize}" width="100%" height="100%">
-            <rect width="${viewBoxSize}" height="${viewBoxSize}" fill="${bg}" />
-            ${rects}
-        </svg>`;
+        const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewBoxSize} ${viewBoxSize}" width="100%" height="100%"><rect width="${viewBoxSize}" height="${viewBoxSize}" fill="${bg}" />${rects}</svg>`;
 
         const blob = new Blob([svgContent], { type: 'image/svg+xml' });
         const link = document.createElement('a');
         link.download = `qrcode_${Date.now()}.svg`;
         link.href = URL.createObjectURL(blob);
         link.click();
-        window.Atelier.showToast('Downloaded Scalable SVG!', 'success');
+        if (window.Atelier && window.Atelier.showToast) {
+            window.Atelier.showToast('Downloaded Scalable SVG!', 'success');
+        }
     });
 
-    // Listen to changes
-    [qrUrlInput, wifiSsid, wifiPassword, wifiAuth, wifiHidden, vcardFirst, vcardLast, vcardPhone, vcardEmail, vcardOrg, qrTextInput, qrErrorCorrection].forEach(el => {
+    [qrUrlInput, wifiSsid, wifiPassword, wifiAuth, wifiHidden, vcardFirst, vcardLast, vcardPhone, vcardEmail, vcardOrg, qrTextInput, qrErrorCorrection, qrResolution].forEach(el => {
         if (el) {
             el.addEventListener('input', updateQRCode);
             el.addEventListener('change', updateQRCode);
