@@ -39,107 +39,103 @@ export const html = `<h1>Aspect Ratio Calculator</h1>
         </div>`;
 
 export function init() {
-const rW = document.getElementById('rW');
-        const rH = document.getElementById('rH');
-        const tW = document.getElementById('tW');
-        const tH = document.getElementById('tH');
-        const visualRect = document.getElementById('visualRect');
-        const resultText = document.getElementById('resultText');
+    const rW = document.getElementById('rW');
+    const rH = document.getElementById('rH');
+    const tW = document.getElementById('tW');
+    const tH = document.getElementById('tH');
+    const visualRect = document.getElementById('visualRect');
+    const resultText = document.getElementById('resultText');
 
-        let lastModified = 'w';
+    let lastModified = 'w';
 
-        function showToast(message, isError = false) {
-            window.Atelier.showToast(message, isError ? 'error' : 'success');
+    function showToast(message, isError = false) {
+        window.Atelier.showToast(message, isError ? 'error' : 'success');
+    }
+
+    function calculate() {
+        const rwVal = parseFloat(rW.value);
+        const rhVal = parseFloat(rH.value);
+
+        if (isNaN(rwVal) || rwVal <= 0 || isNaN(rhVal) || rhVal <= 0) {
+            tH.value = '';
+            tW.value = '';
+            resultText.innerText = 'Invalid ratio';
+            visualRect.style.width = '0px';
+            visualRect.style.height = '0px';
+            return;
         }
 
-        function calculate() {
-            const rwVal = parseFloat(rW.value);
-            const rhVal = parseFloat(rH.value);
-
-            if (isNaN(rwVal) || rwVal <= 0 || isNaN(rhVal) || rhVal <= 0) {
-                showToast('Ratio dimensions must be greater than 0', true);
+        if (lastModified === 'w') {
+            const twVal = parseFloat(tW.value);
+            if (isNaN(twVal) || twVal <= 0) {
                 tH.value = '';
-                tW.value = '';
-                resultText.innerText = 'Invalid ratio';
-                visualRect.style.width = '0px';
-                visualRect.style.height = '0px';
+                resultText.innerText = 'Enter valid width';
                 return;
             }
-
-            if (lastModified === 'w') {
-                const twVal = parseFloat(tW.value);
-                if (isNaN(twVal) || twVal <= 0) {
-                    tH.value = '';
-                    resultText.innerText = 'Enter valid width';
-                    return;
-                }
-                const computedH = Math.round((twVal * rhVal) / rwVal);
-                tH.value = computedH;
-            } else {
-                const thVal = parseFloat(tH.value);
-                if (isNaN(thVal) || thVal <= 0) {
-                    tW.value = '';
-                    resultText.innerText = 'Enter valid height';
-                    return;
-                }
-                const computedW = Math.round((thVal * rwVal) / rhVal);
-                tW.value = computedW;
+            const computedH = Math.round((twVal * rhVal) / rwVal);
+            tH.value = computedH;
+        } else {
+            const thVal = parseFloat(tH.value);
+            if (isNaN(thVal) || thVal <= 0) {
+                tW.value = '';
+                resultText.innerText = 'Enter valid height';
+                return;
             }
-
-            updatePreview(rwVal, rhVal);
+            const computedW = Math.round((thVal * rwVal) / rhVal);
+            tW.value = computedW;
         }
 
-        function updatePreview(rw, rh) {
-            const containerMax = 140;
-            const ratio = rw / rh;
+        updatePreview(rwVal, rhVal);
+    }
 
-            let w, h;
-            if (ratio >= 1) {
-                w = Math.min(220, containerMax * ratio);
-                h = w / ratio;
-            } else {
-                h = containerMax;
-                w = h * ratio;
-            }
+    function updatePreview(rw, rh) {
+        const maxW = 200;
+        const maxH = 120;
+        const ratio = rw / rh;
 
-            visualRect.style.width = `${Math.max(20, w)}px`;
-            visualRect.style.height = `${Math.max(20, h)}px`;
-            resultText.innerText = `${tW.value || 0} × ${tH.value || 0} px (${rw}:${rh})`;
+        let w = maxW;
+        let h = maxW / ratio;
+
+        if (h > maxH) {
+            h = maxH;
+            w = maxH * ratio;
         }
 
-        rW.addEventListener('input', () => calculate());
-        rH.addEventListener('input', () => calculate());
-        tW.addEventListener('input', () => { lastModified = 'w'; calculate(); });
-        tH.addEventListener('input', () => { lastModified = 'h'; calculate(); });
+        visualRect.style.width = `${Math.max(15, w)}px`;
+        visualRect.style.height = `${Math.max(15, h)}px`;
+        resultText.innerText = `${tW.value || 0} × ${tH.value || 0} px (${rw}:${rh})`;
+    }
 
-        
-        document.getElementById('ratio-16-9').addEventListener('click', () => setRatio(16, 9));
-        document.getElementById('ratio-4-3').addEventListener('click', () => setRatio(4, 3));
-        document.getElementById('ratio-1-1').addEventListener('click', () => setRatio(1, 1));
-        document.getElementById('ratio-21-9').addEventListener('click', () => setRatio(21, 9));
-        document.getElementById('ratio-9-16').addEventListener('click', () => setRatio(9, 16));
-        document.getElementById('previewBox').addEventListener('click', copyDimensions);
+    rW.addEventListener('input', () => calculate());
+    rH.addEventListener('input', () => calculate());
+    tW.addEventListener('input', () => { lastModified = 'w'; calculate(); });
+    tH.addEventListener('input', () => { lastModified = 'h'; calculate(); });
 
-        function setRatio(w, h) {
-            rW.value = w;
-            rH.value = h;
-            lastModified = 'w';
-            calculate();
-            showToast(`Applied preset ${w}:${h}`);
-        }
+    document.getElementById('ratio-16-9').addEventListener('click', () => setRatio(16, 9));
+    document.getElementById('ratio-4-3').addEventListener('click', () => setRatio(4, 3));
+    document.getElementById('ratio-1-1').addEventListener('click', () => setRatio(1, 1));
+    document.getElementById('ratio-21-9').addEventListener('click', () => setRatio(21, 9));
+    document.getElementById('ratio-9-16').addEventListener('click', () => setRatio(9, 16));
+    document.getElementById('previewBox').addEventListener('click', copyDimensions);
 
-        function copyDimensions() {
-            const textToCopy = `${tW.value || 0}x${tH.value || 0}`;
-            if (!tW.value || !tH.value || tW.value === '0' || tH.value === '0') return;
-            
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                showToast(`Copied ${textToCopy} to clipboard!`);
-            }).catch(() => {
-                showToast('Failed to copy', true);
-            });
-        }
-
+    function setRatio(w, h) {
+        rW.value = w;
+        rH.value = h;
+        lastModified = 'w';
         calculate();
+        showToast(`Applied preset ${w}:${h}`);
+    }
 
-        
+    function copyDimensions() {
+        const textToCopy = `${tW.value || 0}x${tH.value || 0}`;
+        if (!tW.value || !tH.value || tW.value === '0' || tH.value === '0') return;
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            showToast(`Copied ${textToCopy} to clipboard!`);
+        }).catch(() => {
+            showToast('Failed to copy', true);
+        });
+    }
+
+    calculate();
 }
