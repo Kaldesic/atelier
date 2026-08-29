@@ -119,7 +119,6 @@ export function init() {
 
     let batchItems = [];
 
-    // Dropzone listeners
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -132,12 +131,10 @@ export function init() {
         handleFiles(e.dataTransfer.files);
     });
 
-    // Quality slider sync
     qualitySlider.addEventListener('input', () => {
-        qualityVal.innerText = qualitySlider.value + '%';
+        qualityVal.innerText = `${qualitySlider.value}%`;
     });
 
-    // Resize Mode toggle
     resizeMode.addEventListener('change', () => {
         const mode = resizeMode.value;
         if (mode === 'none') {
@@ -149,13 +146,8 @@ export function init() {
                 resizeValue.value = '50';
                 resizeValue.min = '1';
                 resizeValue.max = '500';
-            } else if (mode === 'max-width') {
-                resizeValueLabel.innerText = 'Maximum Width (px)';
-                resizeValue.value = '1200';
-                resizeValue.min = '50';
-                resizeValue.max = '10000';
-            } else if (mode === 'max-height') {
-                resizeValueLabel.innerText = 'Maximum Height (px)';
+            } else if (mode === 'max-width' || mode === 'max-height') {
+                resizeValueLabel.innerText = mode === 'max-width' ? 'Maximum Width (px)' : 'Maximum Height (px)';
                 resizeValue.value = '1200';
                 resizeValue.min = '50';
                 resizeValue.max = '10000';
@@ -179,28 +171,30 @@ export function init() {
 
         let loaded = 0;
         newFiles.forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    batchItems.push({
-                        id: Math.random().toString(36).substring(2, 9),
-                        file: file,
-                        name: file.name,
-                        originalSize: file.size,
-                        width: img.naturalWidth,
-                        height: img.naturalHeight,
-                        imgElement: img,
-                        dataUrl: e.target.result
-                    });
-                    loaded++;
-                    if (loaded === newFiles.length) {
-                        renderQueue();
-                    }
-                };
-                img.src = e.target.result;
+            const objectUrl = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                batchItems.push({
+                    id: Math.random().toString(36).substring(2, 9),
+                    file: file,
+                    name: file.name,
+                    originalSize: file.size,
+                    width: img.naturalWidth,
+                    height: img.naturalHeight,
+                    imgElement: img,
+                    objectUrl: objectUrl
+                });
+                loaded++;
+                if (loaded === newFiles.length) {
+                    renderQueue();
+                }
             };
-            reader.readAsDataURL(file);
+            img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                loaded++;
+                if (loaded === newFiles.length) renderQueue();
+            };
+            img.src = objectUrl;
         });
     }
 
@@ -209,7 +203,7 @@ export function init() {
         const k = 1024;
         const sizes = ['B', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
     }
 
     function renderQueue() {
@@ -228,7 +222,7 @@ export function init() {
             <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.85rem; gap: 1rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem; overflow: hidden;">
                     <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); width: 22px;">#${idx + 1}</span>
-                    <img src="${item.dataUrl}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); flex-shrink: 0;">
+                    <img src="${item.objectUrl}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); flex-shrink: 0;">
                     <div style="overflow: hidden;">
                         <div style="font-size: 0.85rem; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;">${item.name}</div>
                         <div style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">${item.width}×${item.height}px • ${formatBytes(item.originalSize)}</div>
@@ -241,18 +235,21 @@ export function init() {
         filesList.querySelectorAll('.batch-del-item').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const idx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
-                batchItems.splice(idx, 1);
+                const removed = batchItems.splice(idx, 1)[0];
+                if (removed) URL.revokeObjectURL(removed.objectUrl);
                 renderQueue();
             });
         });
     }
 
-    clearAllBtn.addEventListener('click', () => {
+    function clearQueue() {
+        batchItems.forEach(item => URL.revokeObjectURL(item.objectUrl));
         batchItems = [];
         renderQueue();
-    });
+    }
 
-    // In-Browser High Performance Pure JS ZIP Builder Engine
+    clearAllBtn.addEventListener('click', clearQueue);
+
     class ClientZipArchive {
         constructor() {
             this.files = [];
@@ -268,18 +265,18 @@ export function init() {
 
         calculateCRC32(buf) {
             let crc = 0 ^ (-1);
+            const table = this.getCrcTable();
             for (let i = 0; i < buf.length; i++) {
-                crc = (crc >>> 8) ^ this.getCrcTable()[(crc ^ buf[i]) & 0xFF];
+                crc = (crc >>> 8) ^ table[(crc ^ buf[i]) & 0xFF];
             }
             return (crc ^ (-1)) >>> 0;
         }
 
         getCrcTable() {
             if (this.crcTable) return this.crcTable;
-            let c;
-            const table = [];
+            const table = new Uint32Array(256);
             for (let n = 0; n < 256; n++) {
-                c = n;
+                let c = n;
                 for (let k = 0; k < 8; k++) {
                     c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
                 }
@@ -291,7 +288,7 @@ export function init() {
 
         generateBlob() {
             const chunks = [];
-            let centralDirChunks = [];
+            const centralDirChunks = [];
             let offset = 0;
             let centralDirSize = 0;
 
@@ -350,8 +347,6 @@ export function init() {
                 offset += localHeader.length + fileLength;
             }
 
-            const centralDirOffset = offset;
-
             const eocd = new Uint8Array(22);
             const eView = new DataView(eocd.buffer);
             eView.setUint32(0, 0x06054b50, true);
@@ -360,26 +355,26 @@ export function init() {
             eView.setUint16(8, this.files.length, true);
             eView.setUint16(10, this.files.length, true);
             eView.setUint32(12, centralDirSize, true);
-            eView.setUint32(16, centralDirOffset, true);
+            eView.setUint32(16, offset, true);
             eView.setUint16(20, 0, true);
 
-            const allBlobs = [...chunks, ...centralDirChunks, eocd];
-            return new Blob(allBlobs, { type: 'application/zip' });
+            return new Blob([...chunks, ...centralDirChunks, eocd], { type: 'application/zip' });
         }
     }
 
-    // Helper za konverziju Platna (Canvas) u Uint8Array
     function canvasToBytes(canvas, mimeType, quality) {
         return new Promise((resolve) => {
-            canvas.toBlob((blob) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(new Uint8Array(reader.result));
-                reader.readAsArrayBuffer(blob);
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    resolve(new Uint8Array(0));
+                    return;
+                }
+                const buffer = await blob.arrayBuffer();
+                resolve(new Uint8Array(buffer));
             }, mimeType, quality);
         });
     }
 
-    // Execution routine
     async function processBatch() {
         if (batchItems.length === 0) return;
 
@@ -406,7 +401,6 @@ export function init() {
             progressPercent.innerText = `${pct}%`;
             progressBar.style.width = `${pct}%`;
 
-            // Calculate new dimensions
             let newW = item.width;
             let newH = item.height;
 
@@ -414,22 +408,17 @@ export function init() {
                 const ratio = rVal / 100;
                 newW = Math.round(item.width * ratio);
                 newH = Math.round(item.height * ratio);
-            } else if (rMode === 'max-width') {
-                if (item.width > rVal) {
-                    newW = Math.round(rVal);
-                    newH = Math.round(item.height * (rVal / item.width));
-                }
-            } else if (rMode === 'max-height') {
-                if (item.height > rVal) {
-                    newH = Math.round(rVal);
-                    newW = Math.round(item.width * (rVal / item.height));
-                }
+            } else if (rMode === 'max-width' && item.width > rVal) {
+                newW = Math.round(rVal);
+                newH = Math.round(item.height * (rVal / item.width));
+            } else if (rMode === 'max-height' && item.height > rVal) {
+                newH = Math.round(rVal);
+                newW = Math.round(item.width * (rVal / item.height));
             }
 
             newW = Math.max(1, newW);
             newH = Math.max(1, newH);
 
-            // Determine output MIME & extension
             let outMime = item.file.type;
             const lastDotIndex = item.name.lastIndexOf('.');
             let ext = lastDotIndex !== -1 ? item.name.split('.').pop() : 'png';
@@ -447,7 +436,6 @@ export function init() {
             canvas.height = newH;
             const ctx = canvas.getContext('2d');
 
-            // Fill white background for JPEG exports
             if (outMime === 'image/jpeg') {
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, newW, newH);
@@ -455,22 +443,24 @@ export function init() {
 
             ctx.drawImage(item.imgElement, 0, 0, newW, newH);
 
-            // Asinhrono preuzimanje bajtova sa canvasa
             const imageBytes = await canvasToBytes(canvas, outMime, quality);
-
             const finalFileName = `${prefix}${baseName}${suffix}.${ext}`;
             zip.addFile(finalFileName, imageBytes);
 
-            await new Promise(r => setTimeout(r, 10));
+            // Relinquish thread briefly for UI repaint
+            await new Promise(r => requestAnimationFrame(r));
         }
 
         progressStatus.innerText = 'Creating ZIP container...';
 
         const zipBlob = zip.generateBlob();
+        const downloadUrl = URL.createObjectURL(zipBlob);
         const link = document.createElement('a');
         link.download = `atelier_batch_${Date.now()}.zip`;
-        link.href = URL.createObjectURL(zipBlob);
+        link.href = downloadUrl;
         link.click();
+
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000);
 
         window.Atelier?.showToast(`Batch completed! Saved ${total} files in ZIP.`, 'success');
 
