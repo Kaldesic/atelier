@@ -53,6 +53,13 @@ export const TOOLS_REGISTRY = [
 
   // --- 2. Vector & Design Engineering ---
   {
+    id: 'palette-exporter',
+    title: 'Color Palette & Token Exporter',
+    description: 'Generate 10-step accessible shade scales (50–950), WCAG contrast checks, and export to Tailwind, CSS, SCSS, or DTCG JSON.',
+    path: 'palette-exporter',
+    category: 'Vector & Design Engineering'
+  },
+  {
     id: 'svg-cleaner',
     title: 'SVG Cleaner & Optimizer',
     description: 'Minify SVGs by removing editor clutter, comments, and unused tags.',
@@ -136,9 +143,30 @@ export const TOOLS_REGISTRY = [
 
   // --- 5. Developer & Security Tools ---
   {
+    id: 'sql-formatter',
+    title: 'SQL Formatter & Validator',
+    description: 'Format, beautify, validate syntax, and minify SQL queries (Postgres, MySQL, SQLite, ANSI).',
+    path: 'sql-formatter',
+    category: 'Developer & Security Tools'
+  },
+  {
+    id: 'jwt-secret-generator',
+    title: 'JWT Secret & Key Generator',
+    description: 'Generate cryptographically secure secrets (HS256/512), RSA/ECDSA key pairs, and API tokens via Web Crypto API.',
+    path: 'jwt-secret-generator',
+    category: 'Developer & Security Tools'
+  },
+  {
+    id: 'jwt-decoder',
+    title: 'JWT Debugger & Inspector',
+    description: 'Decode header and payload claims of JSON Web Tokens client-side with expiration checks.',
+    path: 'jwt-decoder',
+    category: 'Developer & Security Tools'
+  },
+  {
     id: 'json-formatter',
     title: 'JSON Formatter & Validator',
-    description: 'Format, validate, minfy, and syntax-highlight JSON data.',
+    description: 'Format, validate, minify, and syntax-highlight JSON data.',
     path: 'json-formatter',
     category: 'Developer & Security Tools'
   },
@@ -147,13 +175,6 @@ export const TOOLS_REGISTRY = [
     title: 'Base64 Encoder / Decoder',
     description: 'Convert files to Base64 Data URLs and decode strings back to files.',
     path: 'base64-converter',
-    category: 'Developer & Security Tools'
-  },
-  {
-    id: 'jwt-decoder',
-    title: 'JWT Debugger & Inspector',
-    description: 'Decode header and payload claims of JSON Web Tokens client-side with expiration checks.',
-    path: 'jwt-decoder',
     category: 'Developer & Security Tools'
   },
   {
