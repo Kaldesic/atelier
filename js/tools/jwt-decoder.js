@@ -1,6 +1,6 @@
 export const html = `
     <h1>JWT Debugger & Inspector</h1>
-    <p class="subtitle">Decode and inspect JSON Web Tokens locally with zero telemetry, signature validation checks, and expiration countdowns.</p>
+    <p class="subtitle">Decode and inspect JSON Web Tokens locally with zero telemetry, RFC 7519 claim parsing, and expiration countdowns.</p>
 
     <div class="tool-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem;">
@@ -16,7 +16,7 @@ export const html = `
         </div>
 
         <!-- Token Status Banner -->
-        <div id="jwtStatusBanner" style="display: none; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); background: var(--bg);">
+        <div id="jwtStatusBanner" style="display: none; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.85rem; align-items: center; justify-content: space-between; border: 1px solid var(--border); background: var(--bg);">
             <div id="jwtStatusText" style="font-weight: 500;">Ready</div>
             <div id="jwtExpTime" style="font-family: var(--font-mono); color: var(--text-muted); font-size: 0.8rem;"></div>
         </div>
@@ -29,7 +29,7 @@ export const html = `
                     <label class="input-label" style="margin-bottom: 0; color: #ef4444;">Header (Algorithm & Type)</label>
                     <button class="btn btn-outline" id="copyHeaderBtn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Copy</button>
                 </div>
-                <textarea id="jwtHeaderOutput" class="textarea-field" style="height: 160px; font-family: var(--font-mono); font-size: 0.82rem; color: #ef4444;" readonly placeholder="Decoded header will appear here..."></textarea>
+                <textarea id="jwtHeaderOutput" class="textarea-field" style="height: 180px; font-family: var(--font-mono); font-size: 0.82rem; color: #ef4444;" readonly placeholder="Decoded header will appear here..."></textarea>
             </div>
 
             <!-- Payload Section -->
@@ -38,7 +38,7 @@ export const html = `
                     <label class="input-label" style="margin-bottom: 0; color: #8b5cf6;">Payload (Data & Claims)</label>
                     <button class="btn btn-outline" id="copyPayloadBtn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Copy</button>
                 </div>
-                <textarea id="jwtPayloadOutput" class="textarea-field" style="height: 160px; font-family: var(--font-mono); font-size: 0.82rem; color: #8b5cf6;" readonly placeholder="Decoded payload claims will appear here..."></textarea>
+                <textarea id="jwtPayloadOutput" class="textarea-field" style="height: 180px; font-family: var(--font-mono); font-size: 0.82rem; color: #8b5cf6;" readonly placeholder="Decoded payload claims will appear here..."></textarea>
             </div>
         </div>
 
@@ -68,11 +68,20 @@ export function init() {
         while (base64.length % 4) {
             base64 += '=';
         }
-        try {
-            return decodeURIComponent(escape(window.atob(base64)));
-        } catch {
-            return window.atob(base64);
-        }
+        const binary = window.atob(base64);
+        const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+    }
+
+    function base64UrlEncode(obj) {
+        const jsonString = JSON.stringify(obj);
+        const bytes = new TextEncoder().encode(jsonString);
+        let binary = '';
+        bytes.forEach(b => binary += String.fromCharCode(b));
+        return window.btoa(binary)
+            .replace(/=/g, '')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_');
     }
 
     function decodeJwt() {
@@ -92,28 +101,31 @@ export function init() {
             jwtStatusBanner.style.borderColor = 'var(--error)';
             jwtStatusText.innerHTML = `<span style="color: var(--error);">Invalid JWT Structure (must have 3 dot-separated segments)</span>`;
             jwtExpTime.innerText = '';
-            jwtHeaderOutput.value = 'Error: Invalid JWT';
-            jwtPayloadOutput.value = 'Error: Invalid JWT';
+            jwtHeaderOutput.value = 'Error: Invalid structure';
+            jwtPayloadOutput.value = 'Error: Invalid structure';
             jwtSignatureOutput.value = '';
             return;
         }
 
         try {
-            const headerStr = base64UrlDecode(parts[0]);
-            const payloadStr = base64UrlDecode(parts[1]);
-            const headerObj = JSON.parse(headerStr);
-            const payloadObj = JSON.parse(payloadStr);
+            const headerObj = JSON.parse(base64UrlDecode(parts[0]));
+            const payloadObj = JSON.parse(base64UrlDecode(parts[1]));
 
             jwtHeaderOutput.value = JSON.stringify(headerObj, null, 2);
             jwtPayloadOutput.value = JSON.stringify(payloadObj, null, 2);
             jwtSignatureOutput.value = parts[2];
 
-            // Expiration inspection
             jwtStatusBanner.style.display = 'flex';
-            if (payloadObj.exp) {
+            const now = Math.floor(Date.now() / 1000);
+
+            if (payloadObj.nbf && now < payloadObj.nbf) {
+                const nbfDate = new Date(payloadObj.nbf * 1000);
+                jwtStatusBanner.style.borderColor = 'var(--warning)';
+                jwtStatusText.innerHTML = `<span style="color: var(--warning);">🟡 Token Not Active Yet (Valid from: ${nbfDate.toLocaleString()})</span>`;
+                jwtExpTime.innerText = `nbf: ${payloadObj.nbf}`;
+            } else if (payloadObj.exp) {
                 const expDate = new Date(payloadObj.exp * 1000);
-                const now = new Date();
-                const isExpired = expDate < now;
+                const isExpired = payloadObj.exp < now;
 
                 if (isExpired) {
                     jwtStatusBanner.style.borderColor = 'rgba(239, 68, 68, 0.4)';
@@ -125,14 +137,14 @@ export function init() {
                 jwtExpTime.innerText = `exp: ${payloadObj.exp}`;
             } else {
                 jwtStatusBanner.style.borderColor = 'var(--border)';
-                jwtStatusText.innerHTML = `<span style="color: var(--text-muted);">⚪ Valid Format (No 'exp' claim found)</span>`;
+                jwtStatusText.innerHTML = `<span style="color: var(--text-muted);">⚪ Valid Format (No 'exp' claim)</span>`;
                 jwtExpTime.innerText = '';
             }
 
         } catch (err) {
             jwtStatusBanner.style.display = 'flex';
             jwtStatusBanner.style.borderColor = 'var(--error)';
-            jwtStatusText.innerHTML = `<span style="color: var(--error);">Malformed Payload or Header JSON</span>`;
+            jwtStatusText.innerHTML = `<span style="color: var(--error);">Malformed Payload or Header Encoding</span>`;
             jwtExpTime.innerText = '';
         }
     }
@@ -140,20 +152,19 @@ export function init() {
     jwtInput.addEventListener('input', decodeJwt);
 
     sampleJwtBtn.addEventListener('click', () => {
-        // Mock standard JWT valid until far in future
-        const sampleHeader = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, '');
-        const samplePayload = btoa(JSON.stringify({
+        const sampleHeader = base64UrlEncode({ alg: "HS256", typ: "JWT" });
+        const samplePayload = base64UrlEncode({
             sub: "user_9841285",
             name: "Alex Designer",
             role: "lead_architect",
             iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + 86400 * 30
-        })).replace(/=/g, '');
+            exp: Math.floor(Date.now() / 1000) + (86400 * 30)
+        });
         const sampleSignature = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
 
         jwtInput.value = `${sampleHeader}.${samplePayload}.${sampleSignature}`;
         decodeJwt();
-        window.Atelier.showToast('Sample JWT loaded!', 'info');
+        window.Atelier?.showToast?.('Sample JWT loaded!', 'info');
     });
 
     clearJwtBtn.addEventListener('click', () => {
@@ -163,16 +174,16 @@ export function init() {
     });
 
     copyHeaderBtn.addEventListener('click', () => {
-        if (!jwtHeaderOutput.value) return;
+        if (!jwtHeaderOutput.value || jwtHeaderOutput.value.startsWith('Error')) return;
         navigator.clipboard.writeText(jwtHeaderOutput.value).then(() => {
-            window.Atelier.showToast('Copied Header JSON!', 'success');
+            window.Atelier?.showToast?.('Copied Header JSON!', 'success');
         });
     });
 
     copyPayloadBtn.addEventListener('click', () => {
-        if (!jwtPayloadOutput.value) return;
+        if (!jwtPayloadOutput.value || jwtPayloadOutput.value.startsWith('Error')) return;
         navigator.clipboard.writeText(jwtPayloadOutput.value).then(() => {
-            window.Atelier.showToast('Copied Payload JSON!', 'success');
+            window.Atelier?.showToast?.('Copied Payload JSON!', 'success');
         });
     });
 }
