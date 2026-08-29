@@ -1,6 +1,6 @@
 {
   "short_name": "Atelier",
-  "name": "Atelier Web Utility Suite",
+  "name": "Atelier",
   "description": "Curated minimalist digital workshop with 28 client-side tools for web developers and designers.",
   "start_url": "./",
   "scope": "./",
