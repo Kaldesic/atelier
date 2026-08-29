@@ -1,3 +1,4 @@
+// js/tools/box-shadow-generator.js
 export const html = `
     <h1>CSS Box Shadow & Glass Generator</h1>
     <p class="subtitle">Craft layered box shadows, glassmorphic card styles, and copy production-ready CSS with one click.</p>
@@ -202,12 +203,14 @@ export function init() {
 
     const sliders = [xSlider, ySlider, blurSlider, spreadSlider, opacitySlider, radiusSlider, shadowColorPicker, insetCheck];
     sliders.forEach(el => {
-        el.addEventListener('input', () => {
+        const handler = () => {
             customMultiShadow = null;
             customGlassProps = null;
             allPresets.forEach(b => b.classList.remove('active'));
             update();
-        });
+        };
+        el.addEventListener('input', handler);
+        el.addEventListener('change', handler);
     });
 
     // Preset handlers
@@ -215,12 +218,12 @@ export function init() {
         allPresets.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
-        xSlider.value = config.x || 0;
-        ySlider.value = config.y || 0;
-        blurSlider.value = config.blur || 0;
-        spreadSlider.value = config.spread || 0;
-        opacitySlider.value = config.opacity || 15;
-        radiusSlider.value = config.radius || 12;
+        xSlider.value = config.x !== undefined ? config.x : 0;
+        ySlider.value = config.y !== undefined ? config.y : 8;
+        blurSlider.value = config.blur !== undefined ? config.blur : 24;
+        spreadSlider.value = config.spread !== undefined ? config.spread : 0;
+        opacitySlider.value = config.opacity !== undefined ? config.opacity : 15;
+        radiusSlider.value = config.radius !== undefined ? config.radius : 12;
         shadowColorPicker.value = config.color || '#000000';
         insetCheck.checked = !!config.inset;
 
@@ -235,7 +238,7 @@ export function init() {
     }));
 
     presetLayered.addEventListener('click', () => applyPreset(presetLayered, {
-        radius: 16,
+        x: 0, y: 16, blur: 32, spread: 0, opacity: 12, radius: 16, color: '#000000',
         multiShadow: '0 2px 4px rgba(0,0,0,0.04), 0 8px 16px rgba(0,0,0,0.08), 0 16px 32px rgba(0,0,0,0.12)'
     }));
 
@@ -244,7 +247,7 @@ export function init() {
     }));
 
     presetGlass.addEventListener('click', () => applyPreset(presetGlass, {
-        radius: 16,
+        x: 0, y: 8, blur: 32, spread: 0, opacity: 25, radius: 16, color: '#000000',
         multiShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.25)',
         glassProps: {
             background: 'rgba(255, 255, 255, 0.08)',
@@ -260,16 +263,24 @@ export function init() {
     copyCssBtn.addEventListener('click', () => {
         if (!cssOutput.value) return;
         navigator.clipboard.writeText(cssOutput.value).then(() => {
-            window.Atelier.showToast('Copied CSS to clipboard!', 'success');
+            window.Atelier?.showToast('Copied CSS to clipboard!', 'success');
         });
     });
 
     copyTailwindBtn.addEventListener('click', () => {
         const shadow = shadowTarget.style.boxShadow;
         if (!shadow) return;
-        const twClass = `shadow-[${shadow.replace(/\s+/g, '_')}] rounded-[${radiusSlider.value}px]`;
+        
+        // Sanitize for Tailwind Arbitrary values (replace spaces, handle comma formatting)
+        const cleanShadow = shadow.replace(/,\s+/g, ',').replace(/\s+/g, '_');
+        let twClass = `shadow-[${cleanShadow}] rounded-[${radiusSlider.value}px]`;
+        
+        if (customGlassProps) {
+            twClass += ` bg-[rgba(255,255,255,0.08)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.15)]`;
+        }
+
         navigator.clipboard.writeText(twClass).then(() => {
-            window.Atelier.showToast('Copied Tailwind arbitrary class!', 'success');
+            window.Atelier?.showToast('Copied Tailwind arbitrary class!', 'success');
         });
     });
 
