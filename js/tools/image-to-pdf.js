@@ -36,8 +36,8 @@ export const html = `
                 <label for="pdfMargin" class="input-label">Page Margins</label>
                 <select id="pdfMargin" class="input-field" style="height: 40px;">
                     <option value="0" selected>No Margins (0mm)</option>
-                    <option value="15">Small (5mm)</option>
-                    <option value="30">Standard (10mm)</option>
+                    <option value="14">Small (5mm)</option>
+                    <option value="28">Standard (10mm)</option>
                 </select>
             </div>
 
@@ -95,41 +95,44 @@ export function init() {
         handleFiles(e.dataTransfer.files);
     });
 
-    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        fileInput.value = ''; // Reset input to allow selecting same files again
+    });
 
-    function handleFiles(files) {
+    async function handleFiles(files) {
         if (!files || files.length === 0) return;
         const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
 
         if (validFiles.length === 0) {
-            window.Atelier.showToast('Please upload valid image files (JPG, PNG, WebP)', 'error');
+            if (window.Atelier?.showToast) {
+                window.Atelier.showToast('Please upload valid image files (JPG, PNG, WebP)', 'error');
+            }
             return;
         }
 
-        let loadedCount = 0;
-        validFiles.forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
+        // Maintain index ordering across async load operations
+        const loadedBatch = await Promise.all(validFiles.map(file => {
+            return new Promise((resolve) => {
+                const objectUrl = URL.createObjectURL(file);
                 const img = new Image();
                 img.onload = () => {
-                    imagesQueue.push({
+                    resolve({
                         id: Math.random().toString(36).substring(2, 9),
                         name: file.name,
                         size: (file.size / 1024).toFixed(1) + ' KB',
                         width: img.naturalWidth,
                         height: img.naturalHeight,
                         imgElement: img,
-                        dataUrl: e.target.result
+                        objectUrl: objectUrl
                     });
-                    loadedCount++;
-                    if (loadedCount === validFiles.length) {
-                        renderQueue();
-                    }
                 };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
+                img.src = objectUrl;
+            });
+        }));
+
+        imagesQueue = [...imagesQueue, ...loadedBatch];
+        renderQueue();
     }
 
     function renderQueue() {
@@ -145,7 +148,7 @@ export function init() {
             <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.85rem; gap: 1rem;">
                 <div style="display: flex; align-items: center; gap: 0.85rem; overflow: hidden;">
                     <span style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); width: 24px;">#${idx + 1}</span>
-                    <img src="${item.dataUrl}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);">
+                    <img src="${item.objectUrl}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);">
                     <div style="overflow: hidden;">
                         <div style="font-size: 0.85rem; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${item.name}</div>
                         <div style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">${item.width}×${item.height}px • ${item.size}</div>
@@ -160,19 +163,15 @@ export function init() {
             </div>
         `).join('');
 
-        // Attach listeners
+        // Attach event listeners
         pdfQueueList.querySelectorAll('.pdf-move-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const idx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
                 const dir = e.currentTarget.getAttribute('data-dir');
                 if (dir === 'up' && idx > 0) {
-                    const temp = imagesQueue[idx];
-                    imagesQueue[idx] = imagesQueue[idx - 1];
-                    imagesQueue[idx - 1] = temp;
+                    [imagesQueue[idx], imagesQueue[idx - 1]] = [imagesQueue[idx - 1], imagesQueue[idx]];
                 } else if (dir === 'down' && idx < imagesQueue.length - 1) {
-                    const temp = imagesQueue[idx];
-                    imagesQueue[idx] = imagesQueue[idx + 1];
-                    imagesQueue[idx + 1] = temp;
+                    [imagesQueue[idx], imagesQueue[idx + 1]] = [imagesQueue[idx + 1], imagesQueue[idx]];
                 }
                 renderQueue();
             });
@@ -181,6 +180,7 @@ export function init() {
         pdfQueueList.querySelectorAll('.pdf-del-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const idx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
+                URL.revokeObjectURL(imagesQueue[idx].objectUrl);
                 imagesQueue.splice(idx, 1);
                 renderQueue();
             });
@@ -188,25 +188,37 @@ export function init() {
     }
 
     clearAllPdfBtn.addEventListener('click', () => {
+        imagesQueue.forEach(item => URL.revokeObjectURL(item.objectUrl));
         imagesQueue = [];
         renderQueue();
     });
 
-    // In-Browser PDF Builder Engine
-    // Compiles JPEG/PNG raster buffers directly into standard valid PDF 1.4 streams
+    // Converts Canvas contents directly into a Uint8Array byte buffer without string overhead
+    function canvasToJpegBytes(canvas, quality) {
+        return new Promise((resolve) => {
+            canvas.toBlob((blob) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    resolve(new Uint8Array(reader.result));
+                };
+                reader.readAsArrayBuffer(blob);
+            }, 'image/jpeg', quality);
+        });
+    }
+
     async function compilePdf() {
         if (imagesQueue.length === 0) return;
 
-        window.Atelier.showToast('Compiling PDF document...', 'info');
+        if (window.Atelier?.showToast) {
+            window.Atelier.showToast('Compiling PDF document...', 'info');
+        }
 
         const quality = parseFloat(pdfQuality.value) || 0.92;
         const marginPts = parseInt(pdfMargin.value, 10) || 0;
         const pageSize = pdfPageSize.value;
         const orient = pdfOrientation.value;
 
-        // Standard point dimensions (72 points = 1 inch)
-        // A4: 595.28 x 841.89 pt
-        // Letter: 612 x 792 pt
+        // Points dimensions (72 points = 1 inch)
         const PAGE_SPECS = {
             a4: { w: 595.28, h: 841.89 },
             letter: { w: 612, h: 792 }
@@ -219,13 +231,13 @@ export function init() {
             canvas.width = item.imgElement.naturalWidth;
             canvas.height = item.imgElement.naturalHeight;
             const ctx = canvas.getContext('2d');
+            
+            // Fill background solid white for PNG/WebP alpha channel support
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(item.imgElement, 0, 0);
 
-            // Compress to JPEG for compact clean PDF embedding
-            const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
-            const rawBytes = atob(jpegDataUrl.split(',')[1]);
+            const jpegBytes = await canvasToJpegBytes(canvas, quality);
 
             let pageWidth, pageHeight;
 
@@ -242,7 +254,6 @@ export function init() {
                 pageHeight = isLandscape ? spec.w : spec.h;
             }
 
-            // Calculate scaled image position inside page with margins
             const availW = pageWidth - marginPts * 2;
             const availH = pageHeight - marginPts * 2;
             const imgAspect = canvas.width / canvas.height;
@@ -261,7 +272,7 @@ export function init() {
             const drawY = marginPts + (availH - drawH) / 2;
 
             pagesData.push({
-                rawBytes: rawBytes,
+                jpegBytes: jpegBytes,
                 imgW: canvas.width,
                 imgH: canvas.height,
                 pageW: pageWidth,
@@ -273,46 +284,28 @@ export function init() {
             });
         }
 
-        // Build valid standard PDF 1.4 binary structure
+        // Direct TypedArray binary stream compiler for zero memory leak & corruption-free PDFs
         const binaryChunks = [];
         let offset = 0;
         const xrefOffsets = [];
 
+        const encoder = new TextEncoder();
+
         function writeString(str) {
-            const arr = new Uint8Array(str.length);
-            for (let i = 0; i < str.length; i++) {
-                arr[i] = str.charCodeAt(i);
-            }
+            const arr = encoder.encode(str);
             binaryChunks.push(arr);
             offset += arr.length;
         }
 
-        function writeBytes(rawStr) {
-            const arr = new Uint8Array(rawStr.length);
-            for (let i = 0; i < rawStr.length; i++) {
-                arr[i] = rawStr.charCodeAt(i);
-            }
-            binaryChunks.push(arr);
-            offset += arr.length;
+        function writeBytes(uint8Array) {
+            binaryChunks.push(uint8Array);
+            offset += uint8Array.length;
         }
 
         writeString("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
 
-        // Object ID management
-        // 1: Catalog
-        // 2: Outlines
-        // 3: Pages
-        // For each page:
-        //   4 + i*3: Page Object
-        //   5 + i*3: Content Stream
-        //   6 + i*3: Image XObject
-
         const numPages = pagesData.length;
-        const pageObjIds = [];
-
-        for (let i = 0; i < numPages; i++) {
-            pageObjIds.push(4 + i * 3);
-        }
+        const pageObjIds = pagesData.map((_, i) => 4 + i * 3);
 
         // 1 0 obj - Catalog
         xrefOffsets[1] = offset;
@@ -336,8 +329,7 @@ export function init() {
             xrefOffsets[pageId] = offset;
             writeString(`${pageId} 0 obj\n<< /Type /Page /Parent 3 0 R /MediaBox [0 0 ${page.pageW.toFixed(2)} ${page.pageH.toFixed(2)}] /Contents ${contentId} 0 R /Resources << /XObject << /Im${i+1} ${imageId} 0 R >> /ProcSet [/PDF /ImageC] >> >>\nendobj\n`);
 
-            // Content Stream (places image)
-            // PDF coordinates start from bottom-left
+            // Content Stream
             const streamContent = `q\n${page.drawW.toFixed(2)} 0 0 ${page.drawH.toFixed(2)} ${page.drawX.toFixed(2)} ${(page.pageH - page.drawY - page.drawH).toFixed(2)} cm\n/Im${i+1} Do\nQ\n`;
             
             xrefOffsets[contentId] = offset;
@@ -345,8 +337,8 @@ export function init() {
 
             // Image XObject
             xrefOffsets[imageId] = offset;
-            writeString(`${imageId} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${page.imgW} /Height ${page.imgH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.rawBytes.length} >>\nstream\n`);
-            writeBytes(page.rawBytes);
+            writeString(`${imageId} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${page.imgW} /Height ${page.imgH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.jpegBytes.length} >>\nstream\n`);
+            writeBytes(page.jpegBytes);
             writeString(`\nendstream\nendobj\n`);
         }
 
@@ -363,12 +355,18 @@ export function init() {
         writeString(`trailer\n<< /Size ${totalObjects} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF\n`);
 
         const pdfBlob = new Blob(binaryChunks, { type: 'application/pdf' });
+        const downloadUrl = URL.createObjectURL(pdfBlob);
+        
         const link = document.createElement('a');
         link.download = `atelier_document_${Date.now()}.pdf`;
-        link.href = URL.createObjectURL(pdfBlob);
+        link.href = downloadUrl;
         link.click();
 
-        window.Atelier.showToast(`Successfully packaged ${numPages} page${numPages === 1 ? '' : 's'} to PDF!`, 'success');
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+
+        if (window.Atelier?.showToast) {
+            window.Atelier.showToast(`Successfully packaged ${numPages} page${numPages === 1 ? '' : 's'} to PDF!`, 'success');
+        }
     }
 
     generatePdfBtn.addEventListener('click', compilePdf);
