@@ -46,6 +46,11 @@
 
   <!-- 2. Vector & Design Engineering -->
   <url>
+    <loc>https://kaldesic.github.io/atelier/palette-exporter/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://kaldesic.github.io/atelier/svg-cleaner/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -106,6 +111,16 @@
   </url>
 
   <!-- 5. Developer & Security Tools -->
+  <url>
+    <loc>https://kaldesic.github.io/atelier/sql-formatter/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/jwt-secret-generator/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
   <url>
     <loc>https://kaldesic.github.io/atelier/json-formatter/</loc>
     <changefreq>monthly</changefreq>
