@@ -101,27 +101,29 @@ export function init() {
         return sentence.charAt(0).toUpperCase() + sentence.slice(1) + '.';
     }
 
-    function getRandomParagraph() {
+    function getRandomParagraph(isFirst = false) {
         const sentenceCount = Math.floor(Math.random() * 3) + 4;
         const sentences = [];
+        
         for (let i = 0; i < sentenceCount; i++) {
-            sentences.push(getRandomSentence());
+            if (isFirst && i === 0) {
+                sentences.push('Lorem ipsum dolor sit amet, consectetur adipiscing elit.');
+            } else {
+                sentences.push(getRandomSentence());
+            }
         }
         return sentences.join(' ');
     }
 
     function generate() {
-        const count = parseInt(loremCount.value, 10) || 3;
+        const count = Math.max(1, parseInt(loremCount.value, 10) || 1);
         const wrap = wrapSelect.value;
         let result = '';
 
         if (currentMode === 'paragraphs') {
             const paras = [];
             for (let i = 0; i < count; i++) {
-                let p = getRandomParagraph();
-                if (i === 0 && count > 0) {
-                    p = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ' + p;
-                }
+                let p = getRandomParagraph(i === 0);
                 if (wrap === 'p') p = `<p>${p}</p>`;
                 if (wrap === 'li') p = `<li>${p}</li>`;
                 paras.push(p);
@@ -168,13 +170,20 @@ export function init() {
         }
 
         loremOutput.value = result;
-        const words = result.trim() ? result.trim().split(/\s+/).length : 0;
-        loremStats.innerText = `${words} words • ${result.length} chars`;
+
+        // Metrika: čišćenje HTML tagova i JSON sintakse radi tačnog brojanja reči
+        if (currentMode === 'users' || currentMode === 'json') {
+            loremStats.innerText = `${count} items • ${result.length} chars`;
+        } else {
+            const cleanText = result.replace(/<\/?[^>]+(>|$)/g, '').trim();
+            const words = cleanText ? cleanText.split(/\s+/).length : 0;
+            loremStats.innerText = `${words} words • ${result.length} chars`;
+        }
     }
 
     generateLoremBtn.addEventListener('click', () => {
         generate();
-        window.Atelier.showToast('Generated fresh placeholder content!', 'info');
+        window.Atelier?.showToast?.('Generated fresh placeholder content!', 'info');
     });
 
     loremCount.addEventListener('input', generate);
@@ -183,7 +192,7 @@ export function init() {
     copyLoremBtn.addEventListener('click', () => {
         if (!loremOutput.value) return;
         navigator.clipboard.writeText(loremOutput.value).then(() => {
-            window.Atelier.showToast('Copied content to clipboard!', 'success');
+            window.Atelier?.showToast?.('Copied content to clipboard!', 'success');
         });
     });
 
