@@ -3,9 +3,9 @@
   "name": "Atelier Web Utility Suite",
   "icons": [
     {
-      "src": "favicon.svg",
-      "type": "image/svg+xml",
-      "sizes": "any",
+      "src": "favicon.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512",
       "purpose": "any maskable"
     }
   ],
