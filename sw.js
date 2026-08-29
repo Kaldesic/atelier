@@ -1,4 +1,4 @@
-const CACHE_NAME = 'atelier-v19';
+const CACHE_NAME = 'atelier-v20';
 
 // Base path resolution for GitHub Pages deployment (/atelier/) vs root domain
 const BASE_PATH = self.location.pathname.includes('/atelier/') ? '/atelier' : '';
@@ -41,7 +41,7 @@ const ASSETS_TO_CACHE = [
   `${BASE_PATH}/js/tools/batch-processor.js`
 ];
 
-// 1. Installation - Resilient caching loop (prevents single 404 from failing SW install)
+// 1. Installation - Resilient caching loop
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
@@ -67,30 +67,55 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 3. Fetch - Cache First with scheme guard, CORS support, and offline navigation fallback
+// 3. Fetch - Cache First with Stale-While-Revalidate Navigation Fallback
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // Handle GET requests only
   if (request.method !== 'GET') return;
 
-  // Guard against browser extensions and non-http schemes
   const url = new URL(request.url);
   if (!url.protocol.startsWith('http')) return;
 
+  // Optimized Navigation Handler (Fixes TTFB Bottleneck)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        const cachedHTML = 
+          (await caches.match(request)) ||
+          (await caches.match(`${BASE_PATH}/index.html`)) ||
+          (await caches.match(`${BASE_PATH}/`));
+
+        // Fetch fresh copy in background to keep cache synced
+        const fetchPromise = fetch(request).then(async (networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, networkResponse.clone());
+          }
+          return networkResponse;
+        }).catch(() => null);
+
+        // Return cached HTML immediately if present (sub-10ms response)
+        return cachedHTML || (await fetchPromise) || new Response('Offline resource unavailable.', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: new Headers({ 'Content-Type': 'text/plain' })
+        });
+      })()
+    );
+    return;
+  }
+
+  // General Static Assets Handler
   event.respondWith(
     (async () => {
-      // 1. Check cache first
       const cachedResponse = await caches.match(request);
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      // 2. Fall back to network
       try {
         const networkResponse = await fetch(request);
 
-        // Cache valid basic or CORS responses
         if (
           networkResponse &&
           networkResponse.status === 200 &&
@@ -104,12 +129,6 @@ self.addEventListener('fetch', (event) => {
 
         return networkResponse;
       } catch (error) {
-        // 3. SPA Navigation fallback when completely offline
-        if (request.mode === 'navigate') {
-          const offlineFallback = await caches.match(`${BASE_PATH}/index.html`) || await caches.match(`${BASE_PATH}/`);
-          if (offlineFallback) return offlineFallback;
-        }
-
         return new Response('Offline resource unavailable.', {
           status: 503,
           statusText: 'Service Unavailable',
