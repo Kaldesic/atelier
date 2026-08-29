@@ -25,122 +25,132 @@ export const html = `<h1>Base64 Encoder / Decoder</h1>
         </div>`;
 
 export function init() {
-const fileInput = document.getElementById('fileInput');
-        const dropzone = document.getElementById('dropzone');
-        const outputSection = document.getElementById('outputSection');
-        const rawBase64El = document.getElementById('rawBase64');
-        const dataUrlEl = document.getElementById('dataUrl');
-        const base64Input = document.getElementById('base64Input');
-        const decodeBtn = document.getElementById('decodeBtn');
+    const fileInput = document.getElementById('fileInput');
+    const dropzone = document.getElementById('dropzone');
+    const outputSection = document.getElementById('outputSection');
+    const rawBase64El = document.getElementById('rawBase64');
+    const dataUrlEl = document.getElementById('dataUrl');
+    const base64Input = document.getElementById('base64Input');
+    const decodeBtn = document.getElementById('decodeBtn');
 
-        let activeUrls = [];
-        function purgeMemory() {
-            activeUrls.forEach(url => URL.revokeObjectURL(url));
-            activeUrls = [];
+    let activeUrls = [];
+    function purgeMemory() {
+        activeUrls.forEach(url => URL.revokeObjectURL(url));
+        activeUrls = [];
+    }
+
+    function showToast(message, isError = false) {
+        window.Atelier.showToast(message, isError ? 'error' : 'success');
+    }
+
+    ['dragenter', 'dragover'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+            e.preventDefault(); e.stopPropagation();
+            dropzone.classList.add('drag-over');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+            e.preventDefault(); e.stopPropagation();
+            dropzone.classList.remove('drag-over');
+        });
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+            processFile(e.target.files[0]);
+            fileInput.value = ''; // Ispravka: Reset vrednosti ulaza
         }
+    });
 
-        function showToast(message, isError = false) {
-            window.Atelier.showToast(message, isError ? 'error' : 'success');
+    dropzone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+    });
+
+    window.Atelier.setPasteHandler((e) => {
+        const item = Array.from(e.clipboardData.items).find(i => i.kind === 'file');
+        if (item) processFile(item.getAsFile());
+    });
+
+    function processFile(file) {
+        purgeMemory();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            const base64 = dataUrl.split(',')[1];
+            
+            rawBase64El.textContent = base64.substring(0, 500) + (base64.length > 500 ? '...' : '');
+            rawBase64El.dataset.full = base64;
+            
+            dataUrlEl.textContent = dataUrl.substring(0, 500) + (dataUrl.length > 500 ? '...' : '');
+            dataUrlEl.dataset.full = dataUrl;
+            
+            outputSection.classList.add('active');
+            showToast('Encoded to Base64 successfully');
+        };
+        reader.onerror = () => showToast('Failed to read file', true);
+        reader.readAsDataURL(file);
+    }
+
+    function copyResult(id) {
+        const el = document.getElementById(id);
+        const text = el.dataset.full;
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Copied to clipboard!');
+        }).catch(() => showToast('Failed to copy', true));
+    }
+
+    document.getElementById('copyRawBtn').addEventListener('click', () => copyResult('rawBase64'));
+    document.getElementById('copyDataUrlBtn').addEventListener('click', () => copyResult('dataUrl'));
+
+    decodeBtn.addEventListener('click', () => {
+        let input = base64Input.value.trim();
+        if (!input) {
+            showToast('Please paste a Base64 string first', true);
+            return;
         }
-
-        ['dragenter', 'dragover'].forEach(name => {
-            dropzone.addEventListener(name, (e) => {
-                e.preventDefault(); e.stopPropagation();
-                dropzone.classList.add('drag-over');
-            });
-        });
-
-        ['dragleave', 'drop'].forEach(name => {
-            dropzone.addEventListener(name, (e) => {
-                e.preventDefault(); e.stopPropagation();
-                dropzone.classList.remove('drag-over');
-            });
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) processFile(e.target.files[0]);
-        });
-
-        dropzone.addEventListener('drop', (e) => {
-            if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
-        });
-
-        window.Atelier.setPasteHandler((e) => {
-            const item = Array.from(e.clipboardData.items).find(i => i.kind === 'file');
-            if (item) processFile(item.getAsFile());
-        });
-
-        function processFile(file) {
-            purgeMemory();
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const dataUrl = e.target.result;
-                const base64 = dataUrl.split(',')[1];
-                
-                rawBase64El.textContent = base64.substring(0, 500) + (base64.length > 500 ? '...' : '');
-                rawBase64El.dataset.full = base64;
-                
-                dataUrlEl.textContent = dataUrl.substring(0, 500) + (dataUrl.length > 500 ? '...' : '');
-                dataUrlEl.dataset.full = dataUrl;
-                
-                outputSection.classList.add('active');
-                showToast('Encoded to Base64 successfully');
-            };
-            reader.onerror = () => showToast('Failed to read file', true);
-            reader.readAsDataURL(file);
-        }
-
-        function copyResult(id) {
-            const el = document.getElementById(id);
-            const text = el.dataset.full;
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('Copied to clipboard!');
-            }).catch(() => showToast('Failed to copy', true));
-        }
-
         
-        document.getElementById('copyRawBtn').addEventListener('click', () => copyResult('rawBase64'));
-        document.getElementById('copyDataUrlBtn').addEventListener('click', () => copyResult('dataUrl'));
-
-        decodeBtn.addEventListener('click', () => {
-            const input = base64Input.value.trim();
-            if (!input) {
-                showToast('Please paste a Base64 string first', true);
-                return;
+        try {
+            let base64Data = input;
+            let mime = 'application/octet-stream';
+            
+            if (input.startsWith('data:')) {
+                const parts = input.split(',');
+                mime = parts[0].split(':')[1].split(';')[0];
+                base64Data = parts[1];
             }
             
-            try {
-                let base64Data = input;
-                let mime = 'application/octet-stream';
-                
-                if (input.startsWith('data:')) {
-                    const parts = input.split(',');
-                    mime = parts[0].split(':')[1].split(';')[0];
-                    base64Data = parts[1];
+            // Ispravka: Čišćenje belih znakova i novih redova pre atob call-a
+            const cleanBase64 = base64Data.replace(/\s/g, '');
+            const byteCharacters = atob(cleanBase64);
+            const byteArrays = [];
+            
+            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
                 }
-                
-                const byteCharacters = atob(base64Data);
-                const byteArrays = [];
-                for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-                    const slice = byteCharacters.slice(offset, offset + 512);
-                    const byteNumbers = new Array(slice.length);
-                    for (let i = 0; i < slice.length; i++) {
-                        byteNumbers[i] = slice.charCodeAt(i);
-                    }
-                    byteArrays.push(new Uint8Array(byteNumbers));
-                }
-                
-                const blob = new Blob(byteArrays, {type: mime});
-                const url = URL.createObjectURL(blob);
-                activeUrls.push(url);
-                
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `decoded.${mime.split('/')[1] || 'bin'}`;
-                a.click();
-                showToast('Decoded and downloading...');
-            } catch (err) {
-                showToast('Invalid Base64 string', true);
+                byteArrays.push(new Uint8Array(byteNumbers));
             }
-        });
+            
+            const blob = new Blob(byteArrays, {type: mime});
+            const url = URL.createObjectURL(blob);
+            activeUrls.push(url);
+            
+            // Ispravka: Sređivanje extenzije ako MIME sadrži dodatke poput +xml
+            let ext = mime.split('/')[1] || 'bin';
+            if (ext.includes('+')) ext = ext.split('+')[0];
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `decoded.${ext}`;
+            a.click();
+            showToast('Decoded and downloading...');
+        } catch (err) {
+            showToast('Invalid Base64 string', true);
+        }
+    });
 }
