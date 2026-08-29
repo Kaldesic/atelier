@@ -64,53 +64,78 @@ export function init() {
     const copyRawMdBtn = document.getElementById('copyRawMdBtn');
     const downloadMdBtn = document.getElementById('downloadMdBtn');
 
-    // Lightweight & safe pure-JS markdown parser with GFM features
+    function sanitizeUrl(url) {
+        const trimmed = url.trim();
+        if (/^(javascript|data|vbscript):/i.test(trimmed)) {
+            return '#';
+        }
+        return trimmed;
+    }
+
     function parseMarkdown(md) {
         if (!md) return '';
 
-        let html = md
-            // Escape special HTML chars to prevent raw script injections
+        let out = md
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
+            .replace(/>/g, '&gt;');
 
-            // Code blocks
-            .replace(/```([a-z]*)\n([\s\S]*?)```/g, (match, lang, code) => {
-                return `<pre style="background: var(--card-bg); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0;"><code style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent);">${code.trim()}</code></pre>`;
-            })
+        // Multi-line Code blocks
+        out = out.replace(/```([a-z]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+            return `<pre style="background: var(--card-bg); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0;"><code style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent);">${code.trim()}</code></pre>`;
+        });
 
-            // Headers
-            .replace(/^### (.*$)/gim, '<h3 style="font-size: 1.15rem; font-weight: 700; margin: 1.2rem 0 0.5rem 0; color: var(--text);">$1</h3>')
-            .replace(/^## (.*$)/gim, '<h2 style="font-size: 1.35rem; font-weight: 700; margin: 1.4rem 0 0.5rem 0; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; color: var(--text);">$1</h2>')
-            .replace(/^# (.*$)/gim, '<h1 style="font-size: 1.65rem; font-weight: 800; margin: 1rem 0 0.6rem 0; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; color: var(--text);">$1</h1>')
+        // GFM Tables parsing
+        out = out.replace(/^\|(.+)\|\r?\n\|( *[-:]+[-| :]*)\|/gm, (match, headerRow) => {
+            const headers = headerRow.split('|').map(h => h.trim()).filter(h => h.length > 0);
+            const headerHtml = headers.map(h => `<th style="border: 1px solid var(--border); padding: 0.5rem 0.75rem; background: var(--card-bg);">${h}</th>`).join('');
+            return `<table style="width: 100%; border-collapse: collapse; margin: 1rem 0;"><thead><tr>${headerHtml}</tr></thead><tbody>`;
+        });
+        out = out.replace(/^\|(.+)\|$/gm, (match, content) => {
+            if (content.includes('---')) return ''; // Skip delimiter row
+            const cols = content.split('|').map(c => c.trim()).filter(c => c.length > 0);
+            const colsHtml = cols.map(c => `<td style="border: 1px solid var(--border); padding: 0.5rem 0.75rem;">${c}</td>`).join('');
+            return `<tr>${colsHtml}</tr>`;
+        });
+        out = out.replace(/<\/tr><tbody>/g, '</tr>'); // Fix boundary transitions
+        out = out.replace(/(<\/tr>)(?!\s*<tr>|\s*<\/tbody>)/g, '$1</tbody></table>');
 
-            // Blockquotes
-            .replace(/^\> (.*$)/gim, '<blockquote style="border-left: 3px solid var(--accent); margin: 0.8rem 0; padding-left: 0.8rem; color: var(--text-muted); font-style: italic;">$1</blockquote>')
+        // Headers
+        out = out.replace(/^### (.*$)/gim, '<h3 style="font-size: 1.15rem; font-weight: 700; margin: 1.2rem 0 0.5rem 0; color: var(--text);">$1</h3>');
+        out = out.replace(/^## (.*$)/gim, '<h2 style="font-size: 1.35rem; font-weight: 700; margin: 1.4rem 0 0.5rem 0; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; color: var(--text);">$1</h2>');
+        out = out.replace(/^# (.*$)/gim, '<h1 style="font-size: 1.65rem; font-weight: 800; margin: 1rem 0 0.6rem 0; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; color: var(--text);">$1</h1>');
 
-            // Bold & Italic
-            .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/~~(.*?)~~/g, '<del>$1</del>')
+        // Blockquotes
+        out = out.replace(/^\> (.*$)/gim, '<blockquote style="border-left: 3px solid var(--accent); margin: 0.8rem 0; padding-left: 0.8rem; color: var(--text-muted); font-style: italic;">$1</blockquote>');
 
-            // Inline code
-            .replace(/`([^`]+)`/g, '<code style="background: var(--card-bg); border: 1px solid var(--border); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent);">$1</code>')
+        // Inline Styles: Bold, Italic, Strikethrough
+        out = out.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+        out = out.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        out = out.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        out = out.replace(/~~(.*?)~~/g, '<del>$1</del>');
 
-            // Links & Images
-            .replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2" style="max-width: 100%; border-radius: 8px; margin: 0.5rem 0;" />')
-            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">$1</a>')
+        // Inline Code
+        out = out.replace(/`([^`]+)`/g, '<code style="background: var(--card-bg); border: 1px solid var(--border); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent);">$1</code>');
 
-            // Horizontal rules
-            .replace(/^---$/gim, '<hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;" />')
+        // Links & Images (Safer URI Handling)
+        out = out.replace(/!\[(.*?)\]\((.*?)\)/g, (m, alt, src) => `<img alt="${alt}" src="${sanitizeUrl(src)}" style="max-width: 100%; border-radius: 8px; margin: 0.5rem 0;" />`);
+        out = out.replace(/\[(.*?)\]\((.*?)\)/g, (m, text, href) => `<a href="${sanitizeUrl(href)}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">${text}</a>`);
 
-            // Unordered list items
-            .replace(/^\s*[\-\*]\s+(.*$)/gim, '<li style="margin-left: 1.25rem; list-style-type: disc;">$1</li>')
+        // Horizontal rules
+        out = out.replace(/^---$/gim, '<hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;" />');
 
-            // Line breaks
-            .replace(/\n\n/g, '<div style="margin-bottom: 0.85rem;"></div>')
-            .replace(/\n/g, '<br/>');
+        // Unordered List Items
+        out = out.replace(/^\s*[\-\*]\s+(.*$)/gim, '<li style="margin-left: 1.25rem; list-style-type: disc;">$1</li>');
 
-        return html;
+        // Line Breaks handling without breaking HTML blocks
+        out = out.split('\n\n').map(p => {
+            if (p.trim().startsWith('<pre') || p.trim().startsWith('<table') || p.trim().startsWith('<h') || p.trim().startsWith('<blockquote')) {
+                return p;
+            }
+            return `<p style="margin-bottom: 0.85rem;">${p.replace(/\n/g, '<br/>')}</p>`;
+        }).join('');
+
+        return out;
     }
 
     function update() {
@@ -129,7 +154,6 @@ export function init() {
 
     mdInput.addEventListener('input', update);
 
-    // Toolbar actions helper
     function applyWrap(before, after = before, defaultText = 'text') {
         const start = mdInput.selectionStart;
         const end = mdInput.selectionEnd;
@@ -170,7 +194,11 @@ Atelier is a minimalist, **zero-telemetry** digital workshop designed for web cr
 ## Key Features
 - **100% Client-side**: Processing strictly in memory
 - *Ultra fast*: Real-time updates with zero backend latency
-- Modern typography and contrast tools
+
+| Feature | Support |
+|---|---|
+| Privacy | 100% Client-side |
+| Performance | Instant |
 
 > "Simplicity is the prerequisite for reliability." — Edsger W. Dijkstra
 
@@ -181,11 +209,9 @@ const atelier = {
   offlineFirst: true
 };
 console.log('Crafted with precision.');
-\`\`\`
-
-Feel free to edit this text or paste your own document!`;
+\`\`\``;
         update();
-        window.Atelier.showToast('Sample markdown loaded!', 'info');
+        window.Atelier?.showToast?.('Sample markdown loaded!', 'info');
     });
 
     clearMdBtn.addEventListener('click', () => {
@@ -198,14 +224,14 @@ Feel free to edit this text or paste your own document!`;
         const htmlContent = mdPreview.innerHTML;
         if (!htmlContent) return;
         navigator.clipboard.writeText(htmlContent).then(() => {
-            window.Atelier.showToast('Copied HTML output!', 'success');
+            window.Atelier?.showToast?.('Copied HTML output!', 'success');
         });
     });
 
     copyRawMdBtn.addEventListener('click', () => {
         if (!mdInput.value) return;
         navigator.clipboard.writeText(mdInput.value).then(() => {
-            window.Atelier.showToast('Copied Markdown source!', 'success');
+            window.Atelier?.showToast?.('Copied Markdown source!', 'success');
         });
     });
 
@@ -218,10 +244,9 @@ Feel free to edit this text or paste your own document!`;
         a.download = 'document.md';
         a.click();
         URL.revokeObjectURL(url);
-        window.Atelier.showToast('Downloaded document.md', 'success');
+        window.Atelier?.showToast?.('Downloaded document.md', 'success');
     });
 
-    // Keyboard shortcuts inside textarea
     mdInput.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
             e.preventDefault();
@@ -232,6 +257,5 @@ Feel free to edit this text or paste your own document!`;
         }
     });
 
-    // Initial render
     update();
 }
