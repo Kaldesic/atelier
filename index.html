@@ -15,22 +15,26 @@
     <meta name="description" content="A curated digital workshop for minimalist web tools, daily utilities, and design engineering. 100% client-side execution.">
     <meta name="theme-color" content="#0f1115">
     
-    <!-- Canonical & SEO Social Standards -->
+    <!-- Canonical Link -->
     <link rel="canonical" href="https://kaldesic.github.io/atelier/">
+    
+    <!-- Open Graph Metadata -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Atelier — Minimalist Web Utilities">
     <meta property="og:description" content="A curated digital workshop for minimalist web tools and utilities operating 100% locally.">
     <meta property="og:url" content="https://kaldesic.github.io/atelier/">
     <meta property="og:image" content="https://kaldesic.github.io/atelier/favicon.png">
     
+    <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Atelier — Minimalist Web Utilities">
     <meta name="twitter:description" content="A curated digital workshop for minimalist web tools operating 100% locally.">
     <meta name="twitter:image" content="https://kaldesic.github.io/atelier/favicon.png">
 
-    <!-- PWA & Favicon -->
+    <!-- PWA & Favicons -->
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="favicon.png" type="image/png" sizes="32x32">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon.png">
     <link rel="apple-touch-icon" href="favicon.png">
     
     <!-- Security Headers -->
@@ -39,7 +43,7 @@
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
     
     <script>
-        // Initialize theme before DOM renders to prevent flash
+        // Prevent theme flash before DOM load
         (function() {
             const savedTheme = localStorage.getItem('atelier-theme');
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -120,7 +124,6 @@
         <p>Built with precision for web developers & designers.</p>
     </footer>
 
-    <!-- Use relative scripts so base tag handles root vs sub-paths correctly -->
     <script src="js/core.js"></script>
     <script type="module" src="js/app.js"></script>
 </body>
