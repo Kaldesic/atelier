@@ -1,43 +1,15 @@
-<!-- sitemap.xml -->
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
   <url>
     <loc>https://kaldesic.github.io/atelier/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+
+  <!-- 1. Image & Media Studio -->
   <url>
-    <loc>https://kaldesic.github.io/atelier/webp-converter/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kaldesic.github.io/atelier/svg-cleaner/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kaldesic.github.io/atelier/favicon-generator/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kaldesic.github.io/atelier/color-extractor/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kaldesic.github.io/atelier/image-resizer/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kaldesic.github.io/atelier/exif-stripper/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kaldesic.github.io/atelier/aspect-ratio-calculator/</loc>
+    <loc>https://kaldesic.github.io/atelier/batch-processor/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -47,7 +19,34 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://kaldesic.github.io/atelier/base64-converter/</loc>
+    <loc>https://kaldesic.github.io/atelier/webp-converter/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/image-resizer/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/favicon-generator/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/exif-stripper/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/color-extractor/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 2. Vector & Design Engineering -->
+  <url>
+    <loc>https://kaldesic.github.io/atelier/svg-cleaner/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -57,7 +56,93 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://kaldesic.github.io/atelier/gradient-generator/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/box-shadow-generator/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/color-converter/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 3. Documents & Daily Utilities -->
+  <url>
+    <loc>https://kaldesic.github.io/atelier/qr-code-studio/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/text-diff-case/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/image-to-pdf/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 4. Layout & Typography -->
+  <url>
     <loc>https://kaldesic.github.io/atelier/unit-converter/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/aspect-ratio-calculator/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/markdown-previewer/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 5. Developer & Security Tools -->
+  <url>
+    <loc>https://kaldesic.github.io/atelier/json-formatter/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/base64-converter/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/jwt-decoder/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/uuid-generator/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/regex-tester/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/url-encoder/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/html-entity-encoder/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kaldesic.github.io/atelier/lorem-generator/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
