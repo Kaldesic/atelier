@@ -99,24 +99,32 @@ export function init() {
         '•': '&bull;'
     };
 
+    function showToast(msg, type = 'info') {
+        if (window.Atelier?.showToast) {
+            window.Atelier.showToast(msg, type);
+        }
+    }
+
     function setMode(mode) {
         currentMode = mode;
-        [btnNamed, btnNumeric, btnHex, btnUnescape].forEach(b => b.classList.remove('active'));
-        if (mode === 'named') btnNamed.classList.add('active');
-        if (mode === 'numeric') btnNumeric.classList.add('active');
-        if (mode === 'hex') btnHex.classList.add('active');
-        if (mode === 'unescape') btnUnescape.classList.add('active');
+        [btnNamed, btnNumeric, btnHex, btnUnescape].forEach(b => b?.classList.remove('active'));
+        if (mode === 'named') btnNamed?.classList.add('active');
+        if (mode === 'numeric') btnNumeric?.classList.add('active');
+        if (mode === 'hex') btnHex?.classList.add('active');
+        if (mode === 'unescape') btnUnescape?.classList.add('active');
         process();
     }
 
-    btnNamed.addEventListener('click', () => setMode('named'));
-    btnNumeric.addEventListener('click', () => setMode('numeric'));
-    btnHex.addEventListener('click', () => setMode('hex'));
-    btnUnescape.addEventListener('click', () => setMode('unescape'));
+    function unescapeHTML(str) {
+        const txt = document.createElement('textarea');
+        txt.innerHTML = str;
+        return txt.value;
+    }
 
     function process() {
         const val = entityInput.value;
-        entityCount.innerText = `${val.length} character${val.length === 1 ? '' : 's'}`;
+        const charLen = Array.from(val).length;
+        entityCount.innerText = `${charLen} character${charLen === 1 ? '' : 's'}`;
 
         if (!val) {
             entityOutput.value = '';
@@ -125,46 +133,83 @@ export function init() {
 
         let out = '';
         if (currentMode === 'named') {
-            out = val.replace(/[&<>"'©®™€£¥§°±×÷—–…•]/g, (ch) => NAMED_MAP[ch] || `&#${ch.charCodeAt(0)};`);
+            out = val.replace(/[&<>"'©®™€£¥§°±×÷—–…•]/g, (ch) => NAMED_MAP[ch] || `&#${ch.codePointAt(0)};`);
         } else if (currentMode === 'numeric') {
-            out = val.replace(/[^\w\s]/g, (ch) => `&#${ch.codePointAt(0)};`);
+            out = Array.from(val).map(ch => {
+                const code = ch.codePointAt(0);
+                return (code > 127 || /[^\w\s]/.test(ch)) ? `&#${code};` : ch;
+            }).join('');
         } else if (currentMode === 'hex') {
-            out = val.replace(/[^\w\s]/g, (ch) => `&#x${ch.codePointAt(0).toString(16).toUpperCase()};`);
+            out = Array.from(val).map(ch => {
+                const code = ch.codePointAt(0);
+                return (code > 127 || /[^\w\s]/.test(ch)) ? `&#x${code.toString(16).toUpperCase()};` : ch;
+            }).join('');
         } else if (currentMode === 'unescape') {
-            const doc = new DOMParser().parseFromString(val, 'text/html');
-            out = doc.documentElement.textContent || '';
+            out = unescapeHTML(val);
         }
 
         entityOutput.value = out;
     }
 
-    entityInput.addEventListener('input', process);
+    const onNamedClick = () => setMode('named');
+    const onNumericClick = () => setMode('numeric');
+    const onHexClick = () => setMode('hex');
+    const onUnescapeClick = () => setMode('unescape');
+    const onInput = () => process();
 
-    copyEntityBtn.addEventListener('click', () => {
+    btnNamed?.addEventListener('click', onNamedClick);
+    btnNumeric?.addEventListener('click', onNumericClick);
+    btnHex?.addEventListener('click', onHexClick);
+    btnUnescape?.addEventListener('click', onUnescapeClick);
+    entityInput?.addEventListener('input', onInput);
+
+    const onCopyClick = () => {
         if (!entityOutput.value) return;
         navigator.clipboard.writeText(entityOutput.value).then(() => {
-            window.Atelier.showToast('Copied to clipboard!', 'success');
+            showToast('Copied to clipboard!', 'success');
+        }).catch(() => {
+            showToast('Failed to copy.', 'error');
         });
-    });
+    };
+    copyEntityBtn?.addEventListener('click', onCopyClick);
 
-    clearBtn.addEventListener('click', () => {
+    const onClearClick = () => {
         entityInput.value = '';
         process();
         entityInput.focus();
-    });
+    };
+    clearBtn?.addEventListener('click', onClearClick);
 
-    sampleBtn.addEventListener('click', () => {
+    const onSampleClick = () => {
         entityInput.value = `<div class="card">\n  <h2>Hello "World" & welcome!</h2>\n  <p>Copyright © 2026 Atelier™ • Price: €49.99</p>\n</div>`;
         setMode('named');
-        window.Atelier.showToast('Sample HTML loaded!', 'info');
-    });
+        showToast('Sample HTML loaded!', 'info');
+    };
+    sampleBtn?.addEventListener('click', onSampleClick);
 
-    document.querySelectorAll('.insert-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    const insertBtns = document.querySelectorAll('.insert-btn');
+    const insertHandlers = [];
+
+    insertBtns.forEach(btn => {
+        const handler = (e) => {
             const char = e.currentTarget.getAttribute('data-insert');
             entityInput.value += char;
             process();
-            window.Atelier.showToast(`Inserted "${char}"`, 'info');
-        });
+            showToast(`Inserted "${char}"`, 'info');
+        };
+        insertHandlers.push({ btn, handler });
+        btn.addEventListener('click', handler);
     });
+
+    return () => {
+        btnNamed?.removeEventListener('click', onNamedClick);
+        btnNumeric?.removeEventListener('click', onNumericClick);
+        btnHex?.removeEventListener('click', onHexClick);
+        btnUnescape?.removeEventListener('click', onUnescapeClick);
+        entityInput?.removeEventListener('input', onInput);
+        copyEntityBtn?.removeEventListener('click', onCopyClick);
+        clearBtn?.removeEventListener('click', onClearClick);
+        sampleBtn?.removeEventListener('click', onSampleClick);
+        insertHandlers.forEach(({ btn, handler }) => btn.removeEventListener('click', handler));
+    };
 }
