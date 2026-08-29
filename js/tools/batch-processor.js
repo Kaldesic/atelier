@@ -4,7 +4,6 @@ export const html = `
     <p class="subtitle">Process, convert, resize, rename, and package hundreds of images into a single ZIP file client-side.</p>
 
     <div class="tool-section">
-        <!-- Drop Zone -->
         <div class="drop-zone" id="batchDropZone">
             <div class="drop-zone-icon">📦</div>
             <div class="drop-zone-text">Drop multiple images here or <span class="browse-link">browse</span></div>
@@ -12,14 +11,12 @@ export const html = `
             <input type="file" id="batchFileInput" multiple accept="image/*" style="display: none;">
         </div>
 
-        <!-- Global Batch Action Controls -->
         <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-top: 1.5rem; margin-bottom: 1.5rem;">
             <div style="font-size: 0.95rem; font-weight: 600; margin-bottom: 1rem; color: var(--text); display: flex; align-items: center; gap: 0.5rem;">
                 <span>⚙️</span> Batch Processing Rules
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <!-- Format Conversion -->
                 <div class="input-group" style="margin-bottom: 0;">
                     <label for="batchTargetFormat" class="input-label">Target Format</label>
                     <select id="batchTargetFormat" class="input-field" style="height: 40px;">
@@ -30,13 +27,11 @@ export const html = `
                     </select>
                 </div>
 
-                <!-- Quality / Compression -->
                 <div class="input-group" style="margin-bottom: 0;">
                     <label for="batchQuality" class="input-label">Output Quality: <span id="batchQualityVal">85%</span></label>
                     <input type="range" id="batchQuality" min="10" max="100" value="85" style="width: 100%; margin-top: 0.5rem;">
                 </div>
 
-                <!-- Resize Mode -->
                 <div class="input-group" style="margin-bottom: 0;">
                     <label for="batchResizeMode" class="input-label">Batch Resizing</label>
                     <select id="batchResizeMode" class="input-field" style="height: 40px;">
@@ -47,14 +42,12 @@ export const html = `
                     </select>
                 </div>
 
-                <!-- Resize Value parameter -->
                 <div class="input-group" id="batchResizeValueGroup" style="margin-bottom: 0; display: none;">
                     <label for="batchResizeValue" class="input-label" id="batchResizeValueLabel">Scale (%)</label>
                     <input type="number" id="batchResizeValue" class="input-field" value="50" min="1" max="10000" style="height: 40px;">
                 </div>
             </div>
 
-            <!-- Filename Pattern / Prefix -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
                 <div class="input-group" style="margin-bottom: 0;">
                     <label for="batchPrefix" class="input-label">Add Prefix to Filename</label>
@@ -67,7 +60,6 @@ export const html = `
             </div>
         </div>
 
-        <!-- Queue & Execution Area -->
         <div id="batchQueueSection" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                 <div style="font-size: 0.95rem; font-weight: 600; color: var(--text);">
@@ -79,10 +71,8 @@ export const html = `
                 </div>
             </div>
 
-            <!-- Files Table / List -->
             <div id="batchFilesList" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 420px; overflow-y: auto; margin-bottom: 1.5rem; padding-right: 4px;"></div>
 
-            <!-- Progress Bar -->
             <div id="batchProgressBarWrapper" style="display: none; margin-bottom: 1.25rem;">
                 <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.4rem; color: var(--text-muted);">
                     <span id="batchProgressStatus">Processing items...</span>
@@ -93,7 +83,6 @@ export const html = `
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="runBatchZipBtn" style="flex: 2; padding: 0.85rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                     <span>⚡</span> Process & Download ZIP Archive
@@ -143,8 +132,6 @@ export function init() {
         handleFiles(e.dataTransfer.files);
     });
 
-    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
     // Quality slider sync
     qualitySlider.addEventListener('input', () => {
         qualityVal.innerText = qualitySlider.value + '%';
@@ -176,12 +163,17 @@ export function init() {
         }
     });
 
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        fileInput.value = '';
+    });
+
     function handleFiles(files) {
         if (!files || files.length === 0) return;
 
         const newFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
         if (newFiles.length === 0) {
-            window.Atelier.showToast('Please select valid image files', 'error');
+            window.Atelier?.showToast('Please select valid image files', 'error');
             return;
         }
 
@@ -261,7 +253,6 @@ export function init() {
     });
 
     // In-Browser High Performance Pure JS ZIP Builder Engine
-    // Compliant with standard PKWare ZIP / DEFLATE specifications (Store mode / 0 compression for maximum speed on pre-compressed images)
     class ClientZipArchive {
         constructor() {
             this.files = [];
@@ -312,47 +303,45 @@ export function init() {
                 const nameBytes = new TextEncoder().encode(file.name);
                 const fileLength = file.data.length;
 
-                // Local file header (30 bytes + name)
                 const localHeader = new Uint8Array(30 + nameBytes.length);
                 const view = new DataView(localHeader.buffer);
 
-                view.setUint32(0, 0x04034b50, true); // Local file header signature
-                view.setUint16(4, 10, true);         // Version needed
-                view.setUint16(6, 0, true);          // Flags
-                view.setUint16(8, 0, true);          // Compression (0 = Store)
+                view.setUint32(0, 0x04034b50, true);
+                view.setUint16(4, 10, true);
+                view.setUint16(6, 0, true);
+                view.setUint16(8, 0, true);
                 view.setUint16(10, dosTime, true);
                 view.setUint16(12, dosDate, true);
                 view.setUint32(14, file.crc32, true);
-                view.setUint32(18, fileLength, true); // Compressed size
-                view.setUint32(22, fileLength, true); // Uncompressed size
-                view.setUint16(26, nameBytes.length, true); // Name length
-                view.setUint16(28, 0, true);          // Extra field length
+                view.setUint32(18, fileLength, true);
+                view.setUint32(22, fileLength, true);
+                view.setUint16(26, nameBytes.length, true);
+                view.setUint16(28, 0, true);
                 localHeader.set(nameBytes, 30);
 
                 chunks.push(localHeader);
                 chunks.push(file.data);
 
-                // Central directory record (46 bytes + name)
                 const centralHeader = new Uint8Array(46 + nameBytes.length);
                 const cView = new DataView(centralHeader.buffer);
 
-                cView.setUint32(0, 0x02014b50, true); // Central header signature
-                cView.setUint16(4, 20, true);         // Version made by
-                cView.setUint16(6, 10, true);         // Version needed
-                cView.setUint16(8, 0, true);          // Flags
-                cView.setUint16(10, 0, true);         // Compression method
+                cView.setUint32(0, 0x02014b50, true);
+                cView.setUint16(4, 20, true);
+                cView.setUint16(6, 10, true);
+                cView.setUint16(8, 0, true);
+                cView.setUint16(10, 0, true);
                 cView.setUint16(12, dosTime, true);
                 cView.setUint16(14, dosDate, true);
                 cView.setUint32(16, file.crc32, true);
                 cView.setUint32(20, fileLength, true);
                 cView.setUint32(24, fileLength, true);
                 cView.setUint16(28, nameBytes.length, true);
-                cView.setUint16(30, 0, true);         // Extra field length
-                cView.setUint16(32, 0, true);         // Comment length
-                cView.setUint16(34, 0, true);         // Disk start
-                cView.setUint16(36, 0, true);         // Internal attrs
-                cView.setUint32(38, 0, true);         // External attrs
-                cView.setUint32(42, offset, true);    // Local header offset
+                cView.setUint16(30, 0, true);
+                cView.setUint16(32, 0, true);
+                cView.setUint16(34, 0, true);
+                cView.setUint16(36, 0, true);
+                cView.setUint32(38, 0, true);
+                cView.setUint32(42, offset, true);
                 centralHeader.set(nameBytes, 46);
 
                 centralDirChunks.push(centralHeader);
@@ -363,21 +352,31 @@ export function init() {
 
             const centralDirOffset = offset;
 
-            // End of central directory record (22 bytes)
             const eocd = new Uint8Array(22);
             const eView = new DataView(eocd.buffer);
-            eView.setUint32(0, 0x06054b50, true); // EOCD signature
-            eView.setUint16(4, 0, true);          // Disk number
-            eView.setUint16(6, 0, true);          // Start disk
-            eView.setUint16(8, this.files.length, true);  // Entries this disk
-            eView.setUint16(10, this.files.length, true); // Total entries
-            eView.setUint32(12, centralDirSize, true);     // Central dir size
-            eView.setUint32(16, centralDirOffset, true);  // Central dir offset
-            eView.setUint16(20, 0, true);                 // Comment length
+            eView.setUint32(0, 0x06054b50, true);
+            eView.setUint16(4, 0, true);
+            eView.setUint16(6, 0, true);
+            eView.setUint16(8, this.files.length, true);
+            eView.setUint16(10, this.files.length, true);
+            eView.setUint32(12, centralDirSize, true);
+            eView.setUint32(16, centralDirOffset, true);
+            eView.setUint16(20, 0, true);
 
             const allBlobs = [...chunks, ...centralDirChunks, eocd];
             return new Blob(allBlobs, { type: 'application/zip' });
         }
+    }
+
+    // Helper za konverziju Platna (Canvas) u Uint8Array
+    function canvasToBytes(canvas, mimeType, quality) {
+        return new Promise((resolve) => {
+            canvas.toBlob((blob) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(new Uint8Array(reader.result));
+                reader.readAsArrayBuffer(blob);
+            }, mimeType, quality);
+        });
     }
 
     // Execution routine
@@ -430,16 +429,11 @@ export function init() {
             newW = Math.max(1, newW);
             newH = Math.max(1, newH);
 
-            const canvas = document.createElement('canvas');
-            canvas.width = newW;
-            canvas.height = newH;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(item.imgElement, 0, 0, newW, newH);
-
             // Determine output MIME & extension
             let outMime = item.file.type;
-            let ext = item.name.split('.').pop();
-            const baseName = item.name.substring(0, item.name.lastIndexOf('.')) || item.name;
+            const lastDotIndex = item.name.lastIndexOf('.');
+            let ext = lastDotIndex !== -1 ? item.name.split('.').pop() : 'png';
+            const baseName = lastDotIndex !== -1 ? item.name.substring(0, lastDotIndex) : item.name;
 
             if (targetMime !== 'keep') {
                 outMime = targetMime;
@@ -448,17 +442,25 @@ export function init() {
                 else if (targetMime === 'image/png') ext = 'png';
             }
 
-            const dataUrl = canvas.toDataURL(outMime, quality);
-            const byteString = atob(dataUrl.split(',')[1]);
-            const ab = new Uint8Array(byteString.length);
-            for (let b = 0; b < byteString.length; b++) {
-                ab[b] = byteString.charCodeAt(b);
+            const canvas = document.createElement('canvas');
+            canvas.width = newW;
+            canvas.height = newH;
+            const ctx = canvas.getContext('2d');
+
+            // Fill white background for JPEG exports
+            if (outMime === 'image/jpeg') {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, newW, newH);
             }
 
-            const finalFileName = `${prefix}${baseName}${suffix}.${ext}`;
-            zip.addFile(finalFileName, ab);
+            ctx.drawImage(item.imgElement, 0, 0, newW, newH);
 
-            // Yield control slightly so UI and progress bar stay responsive
+            // Asinhrono preuzimanje bajtova sa canvasa
+            const imageBytes = await canvasToBytes(canvas, outMime, quality);
+
+            const finalFileName = `${prefix}${baseName}${suffix}.${ext}`;
+            zip.addFile(finalFileName, imageBytes);
+
             await new Promise(r => setTimeout(r, 10));
         }
 
@@ -470,7 +472,7 @@ export function init() {
         link.href = URL.createObjectURL(zipBlob);
         link.click();
 
-        window.Atelier.showToast(`Batch completed! Saved ${total} files in ZIP.`, 'success');
+        window.Atelier?.showToast(`Batch completed! Saved ${total} files in ZIP.`, 'success');
 
         runBatchZipBtn.disabled = false;
         setTimeout(() => {
