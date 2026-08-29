@@ -72,7 +72,6 @@ export function init() {
     const gradientCssOutput = document.getElementById('gradientCssOutput');
     const copyGradientCssBtn = document.getElementById('copyGradientCssBtn');
 
-    // Presets
     const presetEmerald = document.getElementById('preset-emerald');
     const presetHyper = document.getElementById('preset-hyper');
     const presetSunset = document.getElementById('preset-sunset');
@@ -85,25 +84,39 @@ export function init() {
         { color: '#0072ff', pos: 100 }
     ];
 
+    function showToast(msg, type = 'info') {
+        if (window.Atelier?.showToast) {
+            window.Atelier.showToast(msg, type);
+        }
+    }
+
+    function isValidColor(str) {
+        return /^#([0-9A-F]{3}){1,2}$/i.test(str) || str.startsWith('rgb') || str.startsWith('hsl');
+    }
+
     function renderStopsUI() {
         colorStopsContainer.innerHTML = stops.map((stop, idx) => `
             <div style="display: flex; gap: 0.6rem; align-items: center; background: var(--bg); padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid var(--border);" data-stop-idx="${idx}">
-                <input type="color" value="${stop.color}" class="stop-color-picker" data-idx="${idx}" style="width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--border); cursor: pointer; background: transparent; padding: 1px;">
+                <input type="color" value="${isValidColor(stop.color) ? stop.color : '#000000'}" class="stop-color-picker" data-idx="${idx}" style="width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--border); cursor: pointer; background: transparent; padding: 1px;">
                 <input type="text" value="${stop.color}" class="stop-color-text" data-idx="${idx}" style="width: 80px; font-family: var(--font-mono); font-size: 0.8rem; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 4px 6px;">
                 <div style="display: flex; align-items: center; gap: 0.4rem; flex: 1;">
                     <input type="range" min="0" max="100" value="${stop.pos}" class="stop-pos-slider" data-idx="${idx}" style="width: 100%;">
-                    <span style="font-family: var(--font-mono); font-size: 0.75rem; width: 32px; text-align: right;">${stop.pos}%</span>
+                    <span class="stop-pos-val" style="font-family: var(--font-mono); font-size: 0.75rem; width: 32px; text-align: right;">${stop.pos}%</span>
                 </div>
                 ${stops.length > 2 ? `<button class="btn btn-outline stop-del-btn" data-idx="${idx}" style="padding: 0.2rem 0.4rem; font-size: 0.75rem; color: var(--error);">✕</button>` : ''}
             </div>
         `).join('');
 
-        // Attach listeners to stop controls
+        attachEvents();
+    }
+
+    function attachEvents() {
         colorStopsContainer.querySelectorAll('.stop-color-picker').forEach(picker => {
             picker.addEventListener('input', (e) => {
                 const i = parseInt(e.target.getAttribute('data-idx'), 10);
                 stops[i].color = e.target.value;
-                renderStopsUI();
+                const textInput = colorStopsContainer.querySelector(`.stop-color-text[data-idx="${i}"]`);
+                if (textInput) textInput.value = e.target.value;
                 updateGradient();
             });
         });
@@ -111,7 +124,12 @@ export function init() {
         colorStopsContainer.querySelectorAll('.stop-color-text').forEach(text => {
             text.addEventListener('input', (e) => {
                 const i = parseInt(e.target.getAttribute('data-idx'), 10);
-                stops[i].color = e.target.value;
+                const val = e.target.value;
+                stops[i].color = val;
+                if (isValidColor(val)) {
+                    const picker = colorStopsContainer.querySelector(`.stop-color-picker[data-idx="${i}"]`);
+                    if (picker) picker.value = val;
+                }
                 updateGradient();
             });
         });
@@ -119,8 +137,10 @@ export function init() {
         colorStopsContainer.querySelectorAll('.stop-pos-slider').forEach(slider => {
             slider.addEventListener('input', (e) => {
                 const i = parseInt(e.target.getAttribute('data-idx'), 10);
-                stops[i].pos = parseInt(e.target.value, 10);
-                renderStopsUI();
+                const val = parseInt(e.target.value, 10);
+                stops[i].pos = val;
+                const posSpan = e.target.nextElementSibling;
+                if (posSpan) posSpan.textContent = `${val}%`;
                 updateGradient();
             });
         });
@@ -140,11 +160,7 @@ export function init() {
         const angle = angleSlider.value;
         angleVal.innerText = `${angle}°`;
 
-        if (type === 'radial') {
-            angleControlGroup.style.display = 'none';
-        } else {
-            angleControlGroup.style.display = 'block';
-        }
+        angleControlGroup.style.display = type === 'radial' ? 'none' : 'block';
 
         const sortedStops = [...stops].sort((a, b) => a.pos - b.pos);
         const stopsString = sortedStops.map(s => `${s.color} ${s.pos}%`).join(', ');
@@ -174,7 +190,7 @@ export function init() {
 
     addColorStopBtn.addEventListener('click', () => {
         if (stops.length >= 6) {
-            window.Atelier.showToast('Max 6 color stops supported', 'info');
+            showToast('Max 6 color stops supported', 'info');
             return;
         }
         stops.push({ color: '#ff007a', pos: 50 });
@@ -187,7 +203,7 @@ export function init() {
         btn.classList.add('active');
         gradientType.value = type;
         angleSlider.value = angle;
-        stops = newStops;
+        stops = JSON.parse(JSON.stringify(newStops));
         renderStopsUI();
         updateGradient();
     }
@@ -223,10 +239,16 @@ export function init() {
     copyGradientCssBtn.addEventListener('click', () => {
         if (!gradientCssOutput.value) return;
         navigator.clipboard.writeText(gradientCssOutput.value).then(() => {
-            window.Atelier.showToast('Copied CSS to clipboard!', 'success');
+            showToast('Copied CSS to clipboard!', 'success');
+        }).catch(() => {
+            showToast('Failed to copy CSS.', 'error');
         });
     });
 
     renderStopsUI();
     updateGradient();
+
+    return () => {
+        // Purge memory/cleanup ako zatreba
+    };
 }
